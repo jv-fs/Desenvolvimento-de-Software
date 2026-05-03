@@ -7,7 +7,11 @@ from src.Components.GUI import GUI
 def main():
     text_operator = TextOperator()
     midi_writer = MIDIWriter(mapping={})  # AQUI VAI O MAPEAMENTO REAL PARA CONVERSÃO DE TEXTO PARA MIDI (tem que pensar melhor aqui)
-    gui = GUI(on_load_callback=text_operator.load_data)
+    
+    # foco: de acordo com o numero de linhas do texto
+    voices = VoiceFactory.create_voices(quantity=5)
+    
+    gui = GUI(on_load_callback=text_operator.load_data, text_operator=text_operator, voices=voices)
     gui.run()
 
 if __name__ == "__main__":
