@@ -4,15 +4,13 @@ class TextOperator:
     def __init__(self):
         self.text = None
 
-    def load_data(self, local = None):
-        if local: # In case a local path is provided, it means it is a board text, so we use the specific method to read from the board
-            self.text = InputReader.LoadTextFromBoard(local)
+    def load_data(self, source, is_path=False):
+        if is_path:
+            # If the source is a path, load from file
+            self.voices_text = InputReader.LoadTextFromArchive(source)
         else:
-            # If no local path is provided, it means we want to read from an archive, so we use the method to read from an archive
-            path = "caminho/arquivo.txt"  # AQUI VAI TER A HOOK DA BIBLIOTECA QUE ABRE O EXPLORADOR DE ARQUIVOS, PARA O USUÁRIO SELECIONAR O ARQUIVO .TXT
-            self.text = InputReader.LoadTextFromArchive(path)
-
-    def generate_voices_text(self):
-
-        for text in enumerate(self.text):
-            yield text
+            # Otherwise, load from board
+            self.voices_text = InputReader.LoadTextFromBoard(source)
+    
+    def getText(self):
+        return self.text
