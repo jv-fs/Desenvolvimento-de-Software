@@ -1,13 +1,15 @@
 import tkinter as tk
 from tkinter import filedialog, ttk
 
+from src.Utils.VoiceFactory import VoiceFactory
+
 
 class GUI:
     def __init__(self, callback_commander, voices=None):
         self.on_load_callback = callback_commander.get("load_data")
         self.getText_callback = callback_commander.get("getText")
         self.has_error_callback = callback_commander.get("has_error")
-        self.voices = voices or []
+        self.voices = voices or [VoiceFactory.create_voice(text="1", instrument=0, volume=100, tonality="C")]
 
         self.selected_voice_index = 0
         self.root = tk.Tk()
@@ -38,14 +40,11 @@ class GUI:
 
         tk.Label(frame, text="Selecionar Voz:").pack(side=tk.LEFT, padx=5)
 
-        options = [str(i + 1) for i in range(len(self.voices))]
-        self.voice_combobox = ttk.Combobox(frame, values=options, state="readonly", width=15)
+        self.voice_combobox = ttk.Combobox(frame, state="readonly", width=15)
         self.voice_combobox.pack(side=tk.LEFT, padx=5)
 
-        if options:
-            self.voice_combobox.current(0)
-
         self.voice_combobox.bind("<<ComboboxSelected>>", self._handle_voice_change)
+        self._refresh_voice_selector()
 
     def _create_instrument_selector(self):
         frame = tk.Frame(self.root)
@@ -66,6 +65,7 @@ class GUI:
 
         self.text_area = tk.Text(self.root, height=10, width=40)
         self.text_area.pack(pady=10)
+        self.text_area.bind("<KeyRelease>", self._handle_text_change)
 
     def _create_instrument_map(self):
         return {
@@ -93,11 +93,53 @@ class GUI:
             return
 
         self._load_text_to_area()
+        self._update_voices_from_board()
 
     def _load_text_to_area(self):
-
         content = "\n".join(self.getText_callback())
         self._set_text(content)
+
+    def _handle_text_change(self, event=None):
+        self._update_voices_from_board()
+
+    def _update_voices_from_board(self):
+        content = self.text_area.get("1.0", tk.END)
+        lines = [line for line in content.splitlines() if line.strip()]
+        if not lines:
+            lines = [""]
+
+        voice_count = len(lines)
+        existing_voices = self.voices[:voice_count]
+
+        for i in range(len(existing_voices), voice_count):
+            existing_voices.append(
+                VoiceFactory.create_voice(
+                    text=lines[i],
+                    instrument=0,
+                    volume=100,
+                    tonality="C"
+                )
+            )
+
+        for i, voice in enumerate(existing_voices):
+            voice.text = lines[i]
+
+        self.voices = existing_voices
+        self._refresh_voice_selector()
+
+    def _refresh_voice_selector(self):
+        self._ensure_at_least_one_voice()
+        options = [str(i + 1) for i in range(len(self.voices))]
+        self.voice_combobox.config(values=options)
+
+        if options:
+            current = self.voice_combobox.current()
+            if current < 0 or current >= len(options):
+                self.voice_combobox.current(0)
+
+    def _ensure_at_least_one_voice(self):
+        if not self.voices:
+            self.voices = [VoiceFactory.create_voice(text="1", instrument=0, volume=100, tonality="C")]
 
     def _set_text(self, content):
         self.text_area.delete("1.0", tk.END)
