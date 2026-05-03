@@ -17,11 +17,10 @@ class GUI:
         self.text_area = tk.Text(self.root, height=10, width=40)
         self.text_area.pack(pady=10)
 
-
     def _open_filedialog(self):
         path = filedialog.askopenfilename(parent=self.root) # Open file dialog and get the selected path
         if path:
-            self.on_load_callback(path, True) # Passes the path to the callback function / True is indicating that it's a path
+            self.on_load_callback(path) # Passes the path to the callback function / True is indicating that it's a path
 
     def run(self):
         self.root.mainloop()

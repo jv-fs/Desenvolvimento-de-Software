@@ -4,7 +4,7 @@ class TextOperator:
     def __init__(self):
         self.text = None
 
-    def load_data(self, source, is_path=False):
+    def load_data(self, source, is_path=True):
         if is_path:
             # If the source is a path, load from file
             self.voices_text = InputReader.LoadTextFromArchive(source)
