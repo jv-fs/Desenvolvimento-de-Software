@@ -1,43 +1,74 @@
 import tkinter as tk
-from tkinter import filedialog, messagebox, ttk
+from tkinter import filedialog, ttk
+
 
 class GUI:
-    def __init__(self, on_load_callback, text_operator, voices=None):
-        self.on_load_callback = on_load_callback
-        self.text_operator = text_operator
+    def __init__(self, callback_commander, voices=None):
+        self.on_load_callback = callback_commander.get("load_data")
+        self.getText_callback = callback_commander.get("getText")
+        self.has_error_callback = callback_commander.get("has_error")
         self.voices = voices or []
+
         self.selected_voice_index = 0
-        self.root = tk.Tk() # Initialize the main window
-        self.root.title("MIDI Converter") # Set the window title
-        self._setup_widgets() # Set up the widgets (buttons, etc.) in the GUI
+        self.root = tk.Tk()
+        self.root.title("MIDI Converter")
 
-    def _setup_widgets(self):
-        # Button to open file dialog for loading text data:
-        tk.Button(self.root, text="Abrir Arquivo de Texto", command=self._open_filedialog).pack()
+        self.instruments = self._create_instrument_map()
 
-        # Label for error messages (initially hidden)
+        self._build_layout()
+
+
+    def _build_layout(self):
+        self._create_file_button()
+        self._create_error_label()
+        self._create_voice_selector()
+        self._create_instrument_selector()
+        self._create_text_area()
+
+    def _create_file_button(self):
+        tk.Button(self.root, text="Abrir Arquivo de Texto", command=self._handle_file_open).pack()
+
+    def _create_error_label(self):
         self.error_label = tk.Label(self.root, text="", fg="red", font=("Arial", 10, "bold"))
         self.error_label.pack(pady=(0, 5))
 
-        # Frame para Voice selection
-        voice_frame = tk.Frame(self.root)
-        voice_frame.pack(pady=10)
-        
-        tk.Label(voice_frame, text="Selecionar Voz:").pack(side=tk.LEFT, padx=5)
-        
-        voice_options = [f"{i+1}" for i in range(len(self.voices))]
-        self.voice_combobox = ttk.Combobox(voice_frame, values=voice_options, state="readonly", width=15)
+    def _create_voice_selector(self):
+        frame = tk.Frame(self.root)
+        frame.pack(pady=10)
+
+        tk.Label(frame, text="Selecionar Voz:").pack(side=tk.LEFT, padx=5)
+
+        options = [str(i + 1) for i in range(len(self.voices))]
+        self.voice_combobox = ttk.Combobox(frame, values=options, state="readonly", width=15)
         self.voice_combobox.pack(side=tk.LEFT, padx=5)
-        self.voice_combobox.current(0)
-        self.voice_combobox.bind("<<ComboboxSelected>>", self._on_voice_selected)
-        
-        # Frame para Instrument selection
-        instrument_frame = tk.Frame(self.root)
-        instrument_frame.pack(pady=10)
-        
-        tk.Label(instrument_frame, text="Instrumento:").pack(side=tk.LEFT, padx=5)
-        
-        self.instruments = {
+
+        if options:
+            self.voice_combobox.current(0)
+
+        self.voice_combobox.bind("<<ComboboxSelected>>", self._handle_voice_change)
+
+    def _create_instrument_selector(self):
+        frame = tk.Frame(self.root)
+        frame.pack(pady=10)
+
+        tk.Label(frame, text="Instrumento:").pack(side=tk.LEFT, padx=5)
+
+        options = list(self.instruments.keys())
+        self.instrument_combobox = ttk.Combobox(frame, values=options, state="readonly", width=20)
+        self.instrument_combobox.pack(side=tk.LEFT, padx=5)
+
+        self.instrument_combobox.bind("<<ComboboxSelected>>", self._handle_instrument_change)
+
+        self._sync_instrument_with_voice()
+
+    def _create_text_area(self):
+        tk.Label(self.root, text="Digite a codificação da sua música:").pack()
+
+        self.text_area = tk.Text(self.root, height=10, width=40)
+        self.text_area.pack(pady=10)
+
+    def _create_instrument_map(self):
+        return {
             "Piano": 0,
             "Chromatic Percussion": 1,
             "Harpsichord": 6,
@@ -48,56 +79,65 @@ class GUI:
             "Flute": 73,
             "Harmonica": 72
         }
-        
-        instrument_options = list(self.instruments.keys())
-        self.instrument_combobox = ttk.Combobox(instrument_frame, values=instrument_options, state="readonly", width=20)
-        self.instrument_combobox.pack(side=tk.LEFT, padx=5)
-        self.instrument_combobox.bind("<<ComboboxSelected>>", self._on_instrument_changed)
-        self._update_instrument_display()
 
-        # Placeholder for text area where the user can input text directly:
-        tk.Label(self.root, text="Digite a codificação da sua música no campo a seguir:").pack()
-        self.text_area = tk.Text(self.root, height=10, width=40)
-        self.text_area.pack(pady=10)
+    def _handle_file_open(self):
+        path = filedialog.askopenfilename(parent=self.root)
+        if not path:
+            return
 
-    def _open_filedialog(self):
+        self.on_load_callback(path)
 
-        path = filedialog.askopenfilename(parent=self.root) # Open file dialog and get the selected path
-        if path:
-            self.on_load_callback(path)
-           
-            if self.text_operator.has_error():
-                # Mostra mensagem de erro em vermelho
-                self.error_label.config(text=self.text_operator.error_message)
-                # Remove a mensagem após 3 segundos
-                self.root.after(3000, lambda: self.error_label.config(text=""))
-            elif hasattr(self.text_operator, 'voices_text') and self.text_operator.voices_text:
-                content = '\n'.join(self.text_operator.voices_text)
-                self.text_area.delete('1.0', tk.END)  
-                self.text_area.insert('1.0', content)
-    
-    def _on_voice_selected(self, event=None):
-        """Callback quando uma voz é selecionada no combobox"""
+        error = self.has_error_callback()
+        if error:
+            self._show_error(error)
+            return
+
+        self._load_text_to_area()
+
+    def _load_text_to_area(self):
+
+        content = "\n".join(self.getText_callback())
+        self._set_text(content)
+
+    def _set_text(self, content):
+        self.text_area.delete("1.0", tk.END)
+        self.text_area.insert("1.0", content)
+
+    def _show_error(self, message):
+        self.error_label.config(text=message)
+        self.root.after(3000, lambda: self.error_label.config(text=""))
+
+
+    def _handle_voice_change(self, event=None):
         self.selected_voice_index = self.voice_combobox.current()
-        self._update_instrument_display()
-    
-    def _update_instrument_display(self):
-        """Atualiza o display do instrumento baseado na voz selecionada"""
+        self._sync_instrument_with_voice()
+
+    def _get_selected_voice(self):
         if self.selected_voice_index < len(self.voices):
-            current_instrument = self.voices[self.selected_voice_index].instrument
-            # Encontra o nome do instrumento pelo valor
-            for name, value in self.instruments.items():
-                if value == current_instrument:
-                    self.instrument_combobox.set(name)
-                    break
-    
-    def _on_instrument_changed(self, event=None):
-        """Callback quando o instrumento é alterado"""
-        if self.selected_voice_index < len(self.voices):
-            selected_instrument_name = self.instrument_combobox.get()
-            new_instrument_value = self.instruments[selected_instrument_name]
-            self.voices[self.selected_voice_index].instrument = new_instrument_value
-            print(f"Instrumento da Voz {self.selected_voice_index + 1} alterado para {selected_instrument_name} ({new_instrument_value})") 
+            return self.voices[self.selected_voice_index]
+        return None
+
+
+    def _handle_instrument_change(self, event=None):
+        voice = self._get_selected_voice()
+        if not voice:
+            return
+
+        name = self.instrument_combobox.get()
+        voice.instrument = self.instruments[name]
+
+        print(f"Voz {self.selected_voice_index + 1} -> {name}")
+
+    def _sync_instrument_with_voice(self):
+        voice = self._get_selected_voice()
+        if not voice:
+            return
+
+        for name, value in self.instruments.items():
+            if value == voice.instrument:
+                self.instrument_combobox.set(name)
+                break
+
 
     def run(self):
         self.root.mainloop()

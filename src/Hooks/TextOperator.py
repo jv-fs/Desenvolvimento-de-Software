@@ -9,13 +9,16 @@ class TextOperator:
         self.error_message = None
         if is_path:
             # If the source is a path, load from file
-            self.voices_text, self.error_message = InputReader.LoadTextFromArchive(source)
+            self.text, self.error_message = InputReader.LoadTextFromArchive(source)
         else:
             # Otherwise, load from board
-            self.voices_text, self.error_message = InputReader.LoadTextFromBoard(source)
+            self.text, self.error_message = InputReader.LoadTextFromBoard(source)
     
     def getText(self):
         return self.text
     
     def has_error(self):
-        return self.error_message is not None
+        if self.error_message is not None:
+            return self.error_message
+        else:
+            return None
