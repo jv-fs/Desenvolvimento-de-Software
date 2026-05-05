@@ -3,15 +3,18 @@ from tkinter import filedialog, ttk
 
 from src.Utils.VoiceFactory import VoiceFactory
 
+ERROR_DISPLAY_DURATION = 3000  # Duration to display error messages in milliseconds
 
 class GUI:
-    def __init__(self, callback_commander, voices=None):
+    def __init__(self, callback_commander):
         self.on_load_callback = callback_commander.get("load_data")
         self.getText_callback = callback_commander.get("getText")
         self.has_error_callback = callback_commander.get("has_error")
-        self.voices = voices or [VoiceFactory.create_voice(text="1", instrument=0, volume=100, tonality="C")]
-
-        self.selected_voice_index = 0
+        self.get_current_voice_callback = callback_commander.get("get_current_voice")
+        self.create_voices_callback = callback_commander.get("create_voices")
+        self.selected_voice_index = None
+        self.voices_number = 0
+        
         self.root = tk.Tk()
         self.root.title("MIDI Converter")
 
@@ -19,6 +22,9 @@ class GUI:
 
         self._build_layout()
 
+    ##############################################
+    #       Basic GUI setup and layout methods:
+    ##############################################
 
     def _build_layout(self):
         self._create_file_button()
@@ -66,8 +72,16 @@ class GUI:
         self.text_area = tk.Text(self.root, height=10, width=40)
         self.text_area.pack(pady=10)
         self.text_area.bind("<KeyRelease>", self._handle_text_change)
+    
+    def _handle_text_change(self, event=None):
+        self._update_voices_number_from_board()
+        self.create_voices_callback()
 
-    def _create_instrument_map(self):
+    ##############################################
+    #              Handlers:
+    ##############################################
+
+    def _create_instrument_map(self): 
         return {
             "Piano": 0,
             "Chromatic Percussion": 1,
@@ -93,96 +107,68 @@ class GUI:
             return
 
         self._load_text_to_area()
-        self._update_voices_from_board()
+        self._update_voices_number_from_board()
+    
+    def _show_error(self, message):
+        self.error_label.config(text=message)
+        self.root.after(ERROR_DISPLAY_DURATION, lambda: self.error_label.config(text=""))
 
     def _load_text_to_area(self):
         content = "\n".join(self.getText_callback())
-        self._set_text(content)
 
-    def _handle_text_change(self, event=None):
-        self._update_voices_from_board()
+        self.text_area.delete("1.0", tk.END) # Clear existing content before inserting new text
+        self.text_area.insert("1.0", content)
+    
 
-    def _update_voices_from_board(self):
-        lines = self._extract_lines_from_board()
-        voice_count = len(lines)
-        existing_voices = self.voices[:voice_count]
-
-        for i in range(len(existing_voices), voice_count):
-            existing_voices.append(
-                VoiceFactory.create_voice(
-                    text=lines[i],
-                    instrument=0,
-                    volume=100,
-                    tonality="C"
-                )
-            )
-
-        for i, voice in enumerate(existing_voices):
-            voice.text = lines[i]
-
-        self.voices = existing_voices
-        self._refresh_voice_selector()
-
-    def _extract_lines_from_board(self):
+    def _update_voices_number_from_board(self):
         content = self.text_area.get("1.0", tk.END)
         lines = [line for line in content.splitlines() if line.strip()]
+
         if not lines:
-            lines = [""]
-        return lines
+            self.voices_number = 0
+            return
+        else:
+            self.voices_number = len(lines)
+   
+        self._refresh_voice_selector()
 
-    def _refresh_voice_selector(self):
-        self._ensure_at_least_one_voice()
-        options = [str(i + 1) for i in range(len(self.voices))]
-        self.voice_combobox.config(values=options)
+    def _refresh_voice_selector(self): # VERIFICAR
+        if self.voices_number == 0:
+            self.voice_combobox.config(values=[])
+            self.selected_voice_index = None
 
-        if options:
-            current = self.voice_combobox.current()
-            if current < 0 or current >= len(options):
-                self.voice_combobox.current(0)
-
-    def _ensure_at_least_one_voice(self):
-        if not self.voices:
-            self.voices = [VoiceFactory.create_voice(text="1", instrument=0, volume=100, tonality="C")]
-
-    def _set_text(self, content):
-        self.text_area.delete("1.0", tk.END)
-        self.text_area.insert("1.0", content)
-
-    def _show_error(self, message):
-        self.error_label.config(text=message)
-        self.root.after(3000, lambda: self.error_label.config(text=""))
-
-
+        if self.selected_voice_index is not None:
+            options = [str(i + 1) for i in range(self.voices_number)]
+            self.voice_combobox.config(values=options)
+    
     def _handle_voice_change(self, event=None):
         self.selected_voice_index = self.voice_combobox.current()
         self._sync_instrument_with_voice()
-
-    def _get_selected_voice(self):
-        if self.selected_voice_index < len(self.voices):
-            return self.voices[self.selected_voice_index]
-        return None
-
-
-    def _handle_instrument_change(self, event=None):
-        voice = self._get_selected_voice()
-        if not voice:
-            return
-
-        name = self.instrument_combobox.get()
-        voice.instrument = self.instruments[name]
-
-        print(f"Voz {self.selected_voice_index + 1} -> {name}")
-
+    
     def _sync_instrument_with_voice(self):
-        voice = self._get_selected_voice()
-        if not voice:
-            return
-
-        for name, value in self.instruments.items():
-            if value == voice.instrument:
-                self.instrument_combobox.set(name)
-                break
-
+        voice = self.get_current_voice_callback(self.selected_voice_index)
+        if voice:
+            self.voice_combobox.config(state="normal")
+            instrument_name = voice.getInitialInstrument()
+            if instrument_name in self.instruments:
+                self.instrument_combobox.set(instrument_name)
+            else:
+                self.instrument_combobox.set("Instrumento Desconhecido")
+        else:
+            self.instrument_combobox.set("")
+            self.voice_combobox.config(state="disabled")
+    
+    def _handle_instrument_change(self, event=None):
+        selected_instrument = self.instrument_combobox.get()
+        if selected_instrument in self.instruments:
+            instrument_value = self.instruments[selected_instrument]
+            voice = self.get_current_voice_callback(self.selected_voice_index)
+            if voice:
+                voice.setInitialInstrument(instrument_value) # <--- Verificar se isso fere algo
+    
+    ##############################################
+    # Public methods to interact with the GUI:
+    ##############################################
 
     def run(self):
         self.root.mainloop()
