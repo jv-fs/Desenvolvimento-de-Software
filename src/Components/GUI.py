@@ -12,6 +12,7 @@ class GUI:
         self.has_error_callback = callback_commander.get("has_error")
         self.get_current_voice_callback = callback_commander.get("get_current_voice")
         self.create_voices_callback = callback_commander.get("create_voices")
+        self.update_text_callback = callback_commander.get("update_text")
         self.selected_voice_index = None
         self.voices_number = 0
         
@@ -74,6 +75,7 @@ class GUI:
         self.text_area.bind("<KeyRelease>", self._handle_text_change)
     
     def _handle_text_change(self, event=None):
+        self.update_text_callback(self.text_area.get("1.0", tk.END))
         self._update_voices_number_from_board()
         self.create_voices_callback()
 
@@ -135,9 +137,11 @@ class GUI:
     def _refresh_voice_selector(self): # VERIFICAR
         if self.voices_number == 0:
             self.voice_combobox.config(values=[])
+            self.voice_combobox.config(state="disabled")
+            
             self.selected_voice_index = None
-
-        if self.selected_voice_index is not None:
+        else:
+            self.voice_combobox.config(state="normal")
             options = [str(i + 1) for i in range(self.voices_number)]
             self.voice_combobox.config(values=options)
     
@@ -148,7 +152,6 @@ class GUI:
     def _sync_instrument_with_voice(self):
         voice = self.get_current_voice_callback(self.selected_voice_index)
         if voice:
-            self.voice_combobox.config(state="normal")
             instrument_name = voice.getInitialInstrument()
             if instrument_name in self.instruments:
                 self.instrument_combobox.set(instrument_name)
@@ -156,7 +159,7 @@ class GUI:
                 self.instrument_combobox.set("Instrumento Desconhecido")
         else:
             self.instrument_combobox.set("")
-            self.voice_combobox.config(state="disabled")
+            
     
     def _handle_instrument_change(self, event=None):
         selected_instrument = self.instrument_combobox.get()

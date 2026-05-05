@@ -23,7 +23,9 @@ class MIDIWriter:
         if text is not None:
             self._reset_voices()  # Clear existing voices before creating new ones
             for line in text.splitlines():
-                self._create_voice(line, instrument=1, volume=100, tonality="C") # Example values, customize this based on mapping logic
+                if line.strip():  # Only create a voice for non-empty lines
+                    self._create_voice(line, instrument=1, volume=100, tonality="C") # Example values, customize this based on mapping logic
+            print(f"Created {len(self.voices)} voices from text.")
     
     def get_voice_from_index(self, index: int):
         if index is not None and index < len(self.voices):

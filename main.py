@@ -13,7 +13,8 @@ def main():
         "getText": text_operator.getText,
         "has_error": text_operator.has_error,
         "get_current_voice": midi_writer.get_voice_from_index,
-        "create_voices": midi_writer.create_voices
+        "create_voices": midi_writer.create_voices,
+        "update_text": text_operator.setText
     }
 
     gui = GUI(callback_commander=callback_commander)

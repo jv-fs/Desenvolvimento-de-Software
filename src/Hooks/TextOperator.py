@@ -17,6 +17,9 @@ class TextOperator:
     def getText(self):
         return self.text
     
+    def setText(self, text):
+        self.text = text
+    
     def has_error(self):
         if self.error_message is not None:
             return self.error_message
