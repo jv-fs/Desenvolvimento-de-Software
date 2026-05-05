@@ -103,11 +103,7 @@ class GUI:
         self._update_voices_from_board()
 
     def _update_voices_from_board(self):
-        content = self.text_area.get("1.0", tk.END)
-        lines = [line for line in content.splitlines() if line.strip()]
-        if not lines:
-            lines = [""]
-
+        lines = self._extract_lines_from_board()
         voice_count = len(lines)
         existing_voices = self.voices[:voice_count]
 
@@ -126,6 +122,13 @@ class GUI:
 
         self.voices = existing_voices
         self._refresh_voice_selector()
+
+    def _extract_lines_from_board(self):
+        content = self.text_area.get("1.0", tk.END)
+        lines = [line for line in content.splitlines() if line.strip()]
+        if not lines:
+            lines = [""]
+        return lines
 
     def _refresh_voice_selector(self):
         self._ensure_at_least_one_voice()
