@@ -63,8 +63,8 @@ class NoteRule(Mapping):
 
 @Mapping.register('M')
 class EFlatRule(Mapping):
-    def RuleCheck(self, text: str, next_index: int) -> int:
-        if text[next_index] == 'b':
+    def RuleCheck(self, text: str, char_index: int) -> int:
+        if text[char_index + 1] == 'b':
             return RULE_VALID_JUMPING_VALUE
         else:
             return RULE_VALID_VALUE
