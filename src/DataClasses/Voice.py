@@ -1,4 +1,5 @@
 from mido import Message, MidiTrack
+from src.Components.Mapping import *
 
 class Voice:
     def __init__(self, text: str, instrument: int, volume: int, tonality: str):
@@ -24,9 +25,6 @@ class Voice:
     def setInitialTonality(self, tonality: str):
         self.initial_tonality = tonality
     
-    def getMidiTrack(self):
-        return self.midiTrack
-    
     def getInitialInstrument(self):
         return self.initial_instrument
     
@@ -38,3 +36,23 @@ class Voice:
 
     def append_midi_message(self, message: str, control: int, value: int, time: int = 0):
         self.midiTrack.append(Message(message, channel=self.channel, control=control, value=value, time=time))
+    
+    
+    def generate_and_get_track(self) -> MidiTrack:
+        i = 0
+        while i < len(self.text):
+            char = self.text[i]
+            rules = Mapping.registry.get(char, Mapping.registry.get('default')) # Tries to get the rules for the character, if not found, gets the default rule
+            applied = False
+            for rule in rules:
+                validation = rule.RuleCheck(self.text, i)
+                if validation > 0:
+                    rule.RuleApply(self.text, self.midiTrack)
+                    i += validation
+                    applied = True
+                    break # If a rule is applied, break the loop to check the next character
+            
+            if not applied:
+                i += 1 # If no rule is applied, move to the next character to avoid infinite loop (security measure for the default case)
+
+        return self.midiTrack

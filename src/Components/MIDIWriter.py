@@ -34,11 +34,5 @@ class MIDIWriter:
     def append_tracks_to_midi_file(self):
         self._reset_midi_file()  # Clear existing tracks before appending new ones
         for voice in self.voices:
-            track = voice.getMidiTrack()
+            track = voice.generate_and_get_track()
             self.midi_file.tracks.append(track) # Verify if this dont extrapolate the midi file limit of 16 tracks (if it does, we need to merge tracks)
-    
-
-# MIDIWriter tem Voices -> cada Voice tem um MidiTrack - > o MIDIWriter tem que pegar os MidiTracks de cada Voice e colocar no MidiFile
-
-# MIDIWriter adiciona comportamentos para cada voice, como por exemplo, adicionar mensagens MIDI específicas para cada voz, ou configurar o instrumento,
-# volume e tonalidade de cada voz. O MIDIWriter é responsável por criar o arquivo MIDI final a partir das vozes e seus respectivos MidiTracks.
