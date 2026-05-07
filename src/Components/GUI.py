@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import filedialog, ttk
 
+from src.Components.MIDIPlayer import MIDIPlayer
 from src.Utils.VoiceFactory import VoiceFactory
 
 ERROR_DISPLAY_DURATION = 3000  # Duration to display error messages in milliseconds
@@ -13,6 +14,8 @@ class GUI:
         self.get_current_voice_callback = callback_commander.get("get_current_voice")
         self.create_voices_callback = callback_commander.get("create_voices")
         self.update_text_callback = callback_commander.get("update_text")
+        self.get_midi_file_callback = callback_commander.get("get_midi_file")
+        self.compile_tracks_callback = callback_commander.get("compile_tracks")
         self.selected_voice_index = None
         self.voices_number = 0
         
@@ -32,10 +35,18 @@ class GUI:
         self._create_error_label()
         self._create_voice_selector()
         self._create_instrument_selector()
+        self._create_compile_button()
         self._create_text_area()
 
     def _create_file_button(self):
         tk.Button(self.root, text="Abrir Arquivo de Texto", command=self._handle_file_open).pack()
+
+    def _create_compile_button(self):
+        tk.Button(
+            self.root,
+            text="Compilar",
+            command=self._handle_compile
+        ).pack(pady=10)
 
     def _create_error_label(self):
         self.error_label = tk.Label(self.root, text="", fg="red", font=("Arial", 10, "bold"))
@@ -73,15 +84,21 @@ class GUI:
         self.text_area = tk.Text(self.root, height=10, width=40)
         self.text_area.pack(pady=10)
         self.text_area.bind("<KeyRelease>", self._handle_text_change)
-    
-    def _handle_text_change(self, event=None):
-        self.update_text_callback(self.text_area.get("1.0", tk.END))
-        self._update_voices_number_from_board()
-        self.create_voices_callback()
 
     ##############################################
     #              Handlers:
     ##############################################
+    
+    def _handle_text_change(self, event=None):
+        self.update_text_callback(self.text_area.get("1.0", tk.END))
+        self._update_voices_number_from_board()
+
+    def _get_instrument_name_from_value(self, instrument_value):
+        for name, value in self.instruments.items():
+            if value == instrument_value:
+                return name
+
+        return None
 
     def _create_instrument_map(self): 
         return {
@@ -150,17 +167,22 @@ class GUI:
         self._sync_instrument_with_voice()
     
     def _sync_instrument_with_voice(self):
-        voice = self.get_current_voice_callback(self.selected_voice_index)
+        voice = self.get_current_voice_callback(
+            self.selected_voice_index
+        )
+
         if voice:
-            instrument_name = voice.getInitialInstrument()
-            if instrument_name in self.instruments:
+            instrument_value = voice.getInitialInstrument()
+
+            instrument_name = self._get_instrument_name_from_value(instrument_value)
+
+            if instrument_name:
                 self.instrument_combobox.set(instrument_name)
             else:
                 self.instrument_combobox.set("Instrumento Desconhecido")
         else:
             self.instrument_combobox.set("")
-            
-    
+        
     def _handle_instrument_change(self, event=None):
         selected_instrument = self.instrument_combobox.get()
         if selected_instrument in self.instruments:
@@ -169,6 +191,21 @@ class GUI:
             if voice:
                 voice.setInitialInstrument(instrument_value) # <--- Verificar se isso fere algo
     
+
+    def _handle_compile(self):
+        self.update_text_callback(
+            self.text_area.get("1.0", tk.END)
+        )
+
+        self.create_voices_callback()
+        self.compile_tracks_callback()
+        midi_file = self.get_midi_file_callback()
+
+        if hasattr(self, "midi_player"):
+            self.midi_player.cleanup()
+
+        self.midi_player = MIDIPlayer(midi_file)
+
     ##############################################
     # Public methods to interact with the GUI:
     ##############################################

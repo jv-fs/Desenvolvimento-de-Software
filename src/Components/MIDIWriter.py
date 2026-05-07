@@ -36,3 +36,6 @@ class MIDIWriter:
         for voice in self.voices:
             track = voice.generate_and_get_track()
             self.midi_file.tracks.append(track) # Verify if this dont extrapolate the midi file limit of 16 tracks (if it does, we need to merge tracks)
+
+    def get_midi_file(self):
+        return self.midi_file            
