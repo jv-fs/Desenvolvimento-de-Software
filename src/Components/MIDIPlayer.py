@@ -1,5 +1,4 @@
 import subprocess
-import tempfile
 import threading
 import time
 from pathlib import Path
@@ -13,13 +12,9 @@ class PlaybackState(Enum):
 
 class MIDIPlayer:
 
-    def __init__(self, midi_file: MidiFile):
-        if not isinstance(midi_file, MidiFile):
-            raise ValueError(
-                "midi_file deve ser uma instância de mido.MidiFile"
-            )
-
-        self.midi_file = midi_file
+    def __init__(self):
+        
+        self.temp_midi_path = None
 
         self.soundfont_path = (
             Path(__file__).parent.parent.parent
@@ -38,11 +33,10 @@ class MIDIPlayer:
         self.process = None
         self.loop_enabled = False
         self.loop_thread = None
-        self.temp_midi_path = None
 
         self._validate_paths()
-        self._create_temp_midi_file()
 
+        
     def _validate_paths(self):
         if not self.fluidsynth_path.exists():
             raise FileNotFoundError(
@@ -53,18 +47,6 @@ class MIDIPlayer:
             raise FileNotFoundError(
                 f"SoundFont não encontrado: {self.soundfont_path}"
             )
-
-    def _create_temp_midi_file(self):
-        temp_file = tempfile.NamedTemporaryFile(
-            suffix=".mid",
-            delete=False
-        )
-
-        self.temp_midi_path = Path(temp_file.name)
-
-        self.midi_file.save(str(self.temp_midi_path))
-
-        temp_file.close()
 
     def _build_command(self):
         return [
@@ -77,6 +59,9 @@ class MIDIPlayer:
         ]
 
     def play(self, loop: bool = False):
+        if not self.temp_midi_path:
+            raise RuntimeError("Nenhum MIDI carregado.")
+        
         if self.state == PlaybackState.PLAYING:
             return
 
@@ -101,7 +86,7 @@ class MIDIPlayer:
     def _loop_playback(self):
         while self.loop_enabled:
             self._start_process()
-            self.process.wait() #Bloqueia a thread até o processo terminar
+            self.process.wait() # Bloqueia a thread até o processo terminar
 
             if not self.loop_enabled:
                 break
@@ -123,6 +108,9 @@ class MIDIPlayer:
         self.process = None
         self.state = PlaybackState.STOPPED
 
+    def cleanup(self):
+        self.stop()
+
     def restart(self):
         current_loop = self.loop_enabled
 
@@ -135,14 +123,13 @@ class MIDIPlayer:
 
         return self.process.poll() is None
 
-    def cleanup(self):
-        self.stop()
+def set_midi_temp(self, temp_midi_path: Path | str):
 
-        if self.temp_midi_path:
-            try:
-                self.temp_midi_path.unlink(missing_ok=True)
-            except Exception:
-                pass
+    temp_midi_path = Path(temp_midi_path)
 
-    def __del__(self):
-        self.cleanup()
+    if not temp_midi_path.exists():
+        raise FileNotFoundError(
+            f"Arquivo MIDI temporário não encontrado: {temp_midi_path}"
+        )
+
+    self.temp_midi_path = temp_midi_path

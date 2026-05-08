@@ -7,7 +7,8 @@ from src.Components.GUI import GUI
 def main():
     text_operator = TextOperator()
     midi_writer = MIDIWriter(mapping={}, text_operator=text_operator)  
-    
+    midi_player = MIDIPlayer() 
+
     #Usa Alta ordem para passar as funções necessárias para o funcionamento do GUI
     callback_commander = { 
         "load_data": text_operator.load_data,
@@ -16,8 +17,10 @@ def main():
         "get_current_voice": midi_writer.get_voice_from_index,
         "create_voices": midi_writer.create_voices,
         "update_text": text_operator.setText,
-        "get_midi_file": midi_writer.get_midi_file,
-        "compile_tracks": midi_writer.append_tracks_to_midi_file
+        "compile_tracks": midi_writer.append_tracks_to_midi_file,
+        "create_temp_midi_file": midi_writer.create_temp_midi_file,
+        "cleanup": midi_writer.cleanup,
+        "set_temp_midi_path": midi_player.set_midi_temp
     }
 
     gui = GUI(callback_commander=callback_commander)

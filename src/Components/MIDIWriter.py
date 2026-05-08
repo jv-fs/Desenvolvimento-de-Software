@@ -1,3 +1,6 @@
+import tempfile
+from pathlib import Path
+
 from src.DataClasses.Voice import Voice
 from mido import MidiFile, MidiTrack, Message
 
@@ -38,4 +41,25 @@ class MIDIWriter:
             self.midi_file.tracks.append(track) # Verify if this dont extrapolate the midi file limit of 16 tracks (if it does, we need to merge tracks)
 
     def get_midi_file(self):
-        return self.midi_file            
+        return self.midi_file 
+
+    def create_temp_midi_file(self) -> Path:
+        temp_file = tempfile.NamedTemporaryFile(suffix=".mid", delete=False)
+        temp_path = Path(temp_file.name)
+        temp_file.close()
+
+        self.midi_file.save(str(temp_path))
+        return temp_path
+           
+
+    def cleanup(self):
+        self.stop()
+
+        if self.temp_midi_path:
+            try:
+                self.temp_midi_path.unlink(missing_ok=True)
+            except Exception:
+                pass
+
+    def __del__(self):
+        self.cleanup()

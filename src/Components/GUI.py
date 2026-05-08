@@ -2,7 +2,6 @@ import tkinter as tk
 from tkinter import filedialog, ttk
 
 from src.Components.MIDIPlayer import MIDIPlayer
-from src.Utils.VoiceFactory import VoiceFactory
 
 ERROR_DISPLAY_DURATION = 3000  # Duration to display error messages in milliseconds
 
@@ -14,8 +13,11 @@ class GUI:
         self.get_current_voice_callback = callback_commander.get("get_current_voice")
         self.create_voices_callback = callback_commander.get("create_voices")
         self.update_text_callback = callback_commander.get("update_text")
-        self.get_midi_file_callback = callback_commander.get("get_midi_file")
         self.compile_tracks_callback = callback_commander.get("compile_tracks")
+        self.create_temp_midi_file_callback = callback_commander.get("create_temp_midi_file")
+        self.cleanup_callback = callback_commander.get("cleanup")
+        self.set_temp_midi_path_callback = callback_commander.get("set_temp_midi_path")
+
         self.selected_voice_index = None
         self.voices_number = 0
         
@@ -199,12 +201,10 @@ class GUI:
 
         self.create_voices_callback()
         self.compile_tracks_callback()
-        midi_file = self.get_midi_file_callback()
+        temp_midi_path = self.create_temp_midi_file_callback()
+        self.set_temp_midi_path_callback(temp_midi_path)
 
-        if hasattr(self, "midi_player"):
-            self.midi_player.cleanup()
-
-        self.midi_player = MIDIPlayer(midi_file)
+        self.cleanup_callback()
 
     ##############################################
     # Public methods to interact with the GUI:
