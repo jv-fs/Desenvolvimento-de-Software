@@ -123,13 +123,13 @@ class MIDIPlayer:
 
         return self.process.poll() is None
 
-def set_midi_temp(self, temp_midi_path: Path | str):
+    def set_midi_temp(self, temp_midi_path: Path):
 
-    temp_midi_path = Path(temp_midi_path)
+        temp_midi_path = Path(temp_midi_path)
 
-    if not temp_midi_path.exists():
-        raise FileNotFoundError(
-            f"Arquivo MIDI temporário não encontrado: {temp_midi_path}"
-        )
+        if not temp_midi_path.exists():
+            raise FileNotFoundError(
+                f"Arquivo MIDI temporário não encontrado: {temp_midi_path}"
+            )
 
-    self.temp_midi_path = temp_midi_path
+        self.temp_midi_path = temp_midi_path

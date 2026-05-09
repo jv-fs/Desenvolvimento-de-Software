@@ -10,6 +10,8 @@ class MIDIWriter:
         self.text_operator = text_operator
         self.midi_file = MidiFile()
         self.voices = []
+
+        self.temp_midi_path = None
     
     def _reset_midi_file(self):
         self.midi_file = MidiFile()
@@ -53,7 +55,6 @@ class MIDIWriter:
            
 
     def cleanup(self):
-        self.stop()
 
         if self.temp_midi_path:
             try:
