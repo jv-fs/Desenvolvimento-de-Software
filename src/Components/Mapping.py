@@ -50,6 +50,7 @@ class NoteRule(Mapping):
         'H': 72  # C5
     }
 
+
     def RuleCheck(self, text: str, index: int) -> int:
         return RULE_VALID_VALUE
 

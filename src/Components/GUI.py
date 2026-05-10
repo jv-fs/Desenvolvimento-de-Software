@@ -17,6 +17,7 @@ class GUI:
         self.create_temp_midi_file_callback = callback_commander.get("create_temp_midi_file")
         self.cleanup_callback = callback_commander.get("cleanup")
         self.set_temp_midi_path_callback = callback_commander.get("set_temp_midi_path")
+        self.play_callback = callback_commander.get("play")
 
         self.selected_voice_index = None
         self.voices_number = 0
@@ -38,7 +39,9 @@ class GUI:
         self._create_voice_selector()
         self._create_instrument_selector()
         self._create_compile_button()
+        self._create_play_button()
         self._create_text_area()
+        
 
     def _create_file_button(self):
         tk.Button(self.root, text="Abrir Arquivo de Texto", command=self._handle_file_open).pack()
@@ -49,7 +52,17 @@ class GUI:
             text="Compilar",
             command=self._handle_compile
         ).pack(pady=10)
-
+    
+    def _create_play_button(self):
+        tk.Button(
+            self.root,
+            text="Tocar MIDI",
+            command=self._handle_play
+        ).pack(pady=10)
+    
+    def _handle_play(self):
+            self.play_callback()
+    
     def _create_error_label(self):
         self.error_label = tk.Label(self.root, text="", fg="red", font=("Arial", 10, "bold"))
         self.error_label.pack(pady=(0, 5))

@@ -55,7 +55,6 @@ class MIDIWriter:
            
 
     def cleanup(self):
-
         if self.temp_midi_path:
             try:
                 self.temp_midi_path.unlink(missing_ok=True)

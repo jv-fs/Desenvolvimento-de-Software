@@ -47,7 +47,7 @@ class Voice:
             for rule in rules:
                 validation = rule.RuleCheck(self.text, i)
                 if validation > 0:
-                    rule.RuleApply(self.text, self.midiTrack)
+                    rule.RuleApply(char, self.midiTrack)
                     i += validation
                     applied = True
                     break # If a rule is applied, break the loop to check the next character

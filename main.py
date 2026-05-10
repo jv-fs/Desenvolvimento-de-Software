@@ -20,7 +20,8 @@ def main():
         "compile_tracks": midi_writer.append_tracks_to_midi_file,
         "create_temp_midi_file": midi_writer.create_temp_midi_file,
         "cleanup": midi_writer.cleanup,
-        "set_temp_midi_path": midi_player.set_midi_temp
+        "set_temp_midi_path": midi_player.set_midi_temp,
+        "play": midi_player.play
     }
 
     gui = GUI(callback_commander=callback_commander)
