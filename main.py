@@ -1,7 +1,7 @@
 from src.Components.MIDIPlayer import MIDIPlayer
 from src.Hooks.TextOperator import TextOperator
 from src.Components.MIDIWriter import MIDIWriter
-from src.Components.GUI import GUI
+from src.Interface.GUI import GUI
 
 
 def main():
