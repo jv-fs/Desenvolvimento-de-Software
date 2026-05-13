@@ -1,12 +1,13 @@
 import tkinter as tk
 from tkinter import filedialog, ttk
 
+from src.Interface.Modules.Buttons import Buttons
 from src.Components.MIDIPlayer import MIDIPlayer
 
 ERROR_DISPLAY_DURATION = 3000  # Duration to display error messages in milliseconds
 
 class GUI:
-    def __init__(self, callback_commander):
+    def __init__(self, callback_commander, actions_controller):
         self.on_load_callback = callback_commander.get("load_data")
         self.getText_callback = callback_commander.get("getText")
         self.has_error_callback = callback_commander.get("has_error")
@@ -27,7 +28,11 @@ class GUI:
 
         self.instruments = self._create_instrument_map()
 
+        self.actions_controller = actions_controller
+
         self._build_layout()
+        self._create_binds()
+
 
     ##############################################
     #       Basic GUI setup and layout methods:
@@ -39,8 +44,18 @@ class GUI:
         self._create_voice_selector()
         self._create_instrument_selector()
         self._create_compile_button()
-        self._create_play_button()
+        #self._create_play_button()
         self._create_text_area()
+
+        self.buttons = Buttons(self.root)
+        self.buttons.create_play_button()
+    
+    def _create_binds(self):
+        self.root.bind("<<play>>", lambda e: self._react_to_play_button_click())
+
+    
+    def _react_to_play_button_click(self):
+        self.actions_controller.handle_play()
         
 
     def _create_file_button(self):
@@ -53,15 +68,15 @@ class GUI:
             command=self._handle_compile
         ).pack(pady=10)
     
-    def _create_play_button(self):
+    '''def _create_play_button(self):
         tk.Button(
             self.root,
             text="Tocar MIDI",
             command=self._handle_play
-        ).pack(pady=10)
+        ).pack(pady=10)'''
     
-    def _handle_play(self):
-            self.play_callback()
+    '''def _handle_play(self):
+            self.play_callback()'''
     
     def _create_error_label(self):
         self.error_label = tk.Label(self.root, text="", fg="red", font=("Arial", 10, "bold"))

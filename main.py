@@ -2,12 +2,13 @@ from src.Components.MIDIPlayer import MIDIPlayer
 from src.Hooks.TextOperator import TextOperator
 from src.Components.MIDIWriter import MIDIWriter
 from src.Interface.GUI import GUI
+from src.Components.ActionsController import ActionsController
 
 
 def main():
     text_operator = TextOperator()
     midi_writer = MIDIWriter(mapping={}, text_operator=text_operator)  
-    midi_player = MIDIPlayer() 
+    midi_player = MIDIPlayer()
 
     #Usa Alta ordem para passar as funções necessárias para o funcionamento do GUI
     callback_commander = { 
@@ -24,7 +25,8 @@ def main():
         "play": midi_player.play
     }
 
-    gui = GUI(callback_commander=callback_commander)
+    actions_controller = ActionsController(midi_player)
+    gui = GUI(callback_commander=callback_commander, actions_controller=actions_controller)
     gui.run()
 
 if __name__ == "__main__":
