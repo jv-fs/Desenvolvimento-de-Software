@@ -5,6 +5,8 @@ from pathlib import Path
 from enum import Enum
 from mido import MidiFile
 
+EXTRA_TIME_AFTER_MIDI_END = 1.0
+
 class PlaybackState(Enum):
     STOPPED = 0
     PLAYING = 1
@@ -83,6 +85,27 @@ class MIDIPlayer:
 
         self.state = PlaybackState.PLAYING
 
+        threading.Thread(
+        target=self._stop_midi_end,
+        daemon=True
+        ).start()
+        
+    def _stop_midi_end(self):
+        duration = self._get_midi_duration()
+
+        time.sleep(duration + EXTRA_TIME_AFTER_MIDI_END)
+
+        if self.process and self.process.poll() is None:
+            self.process.terminate()
+
+        self.process = None
+        self.state = PlaybackState.STOPPED
+
+    def _get_midi_duration(self):
+        midi = MidiFile(self.temp_midi_path)
+
+        return midi.length
+
     def _loop_playback(self):
         while self.loop_enabled:
             self._start_process()
@@ -108,6 +131,7 @@ class MIDIPlayer:
         self.process = None
         self.state = PlaybackState.STOPPED
 
+    
     def cleanup(self):
         self.stop()
 
@@ -122,6 +146,7 @@ class MIDIPlayer:
             return False
 
         return self.process.poll() is None
+    
 
     def set_midi_temp(self, temp_midi_path: Path):
 
