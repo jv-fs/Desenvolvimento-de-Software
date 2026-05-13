@@ -22,11 +22,14 @@ def main():
         "create_temp_midi_file": midi_writer.create_temp_midi_file,
         "cleanup": midi_writer.cleanup,
         "set_temp_midi_path": midi_player.set_midi_temp,
-        "play": midi_player.play
+        "play_midi": midi_player.play
     }
 
-    actions_controller = ActionsController(midi_player)
-    gui = GUI(callback_commander=callback_commander, actions_controller=actions_controller)
+    
+    gui = GUI(callback_commander=callback_commander)
+    actions_controller = ActionsController(gui, callback_commander)
+    gui.set_actions_controller(actions_controller)
+
     gui.run()
 
 if __name__ == "__main__":

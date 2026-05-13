@@ -10,4 +10,18 @@ class Buttons:
             text="Play",
             command= lambda: self.root.event_generate("<<play>>")
         ).pack(pady=10)
+
+    def create_file_button(self):
+        tk.Button(
+            self.root,
+            text="Abrir Arquivo de Texto",
+            command= lambda: self.root.event_generate("<<file_open>>")
+        ).pack(pady=10)
+
+    def create_compile_button(self):
+        tk.Button(
+            self.root,
+            text="Compilar",
+            command= lambda: self.root.event_generate("<<compile>>")
+        ).pack(pady=10)
     

@@ -7,7 +7,7 @@ from src.Components.MIDIPlayer import MIDIPlayer
 ERROR_DISPLAY_DURATION = 3000  # Duration to display error messages in milliseconds
 
 class GUI:
-    def __init__(self, callback_commander, actions_controller):
+    def __init__(self, callback_commander):
         self.on_load_callback = callback_commander.get("load_data")
         self.getText_callback = callback_commander.get("getText")
         self.has_error_callback = callback_commander.get("has_error")
@@ -18,7 +18,7 @@ class GUI:
         self.create_temp_midi_file_callback = callback_commander.get("create_temp_midi_file")
         self.cleanup_callback = callback_commander.get("cleanup")
         self.set_temp_midi_path_callback = callback_commander.get("set_temp_midi_path")
-        self.play_callback = callback_commander.get("play")
+
 
         self.selected_voice_index = None
         self.voices_number = 0
@@ -28,7 +28,7 @@ class GUI:
 
         self.instruments = self._create_instrument_map()
 
-        self.actions_controller = actions_controller
+        self.actions_controller = None
 
         self._build_layout()
         self._create_binds()
@@ -39,45 +39,33 @@ class GUI:
     ##############################################
 
     def _build_layout(self):
-        self._create_file_button()
+        
+        self.buttons = Buttons(self.root)
+        
+        self.buttons.create_file_button()
         self._create_error_label()
         self._create_voice_selector()
         self._create_instrument_selector()
-        self._create_compile_button()
-        #self._create_play_button()
+        self.buttons.create_compile_button()
         self._create_text_area()
 
-        self.buttons = Buttons(self.root)
         self.buttons.create_play_button()
     
     def _create_binds(self):
         self.root.bind("<<play>>", lambda e: self._react_to_play_button_click())
-
+        self.root.bind("<<file_open>>", lambda e: self._react_to_file_open_button_click())
+        self.root.bind("<<compile>>", lambda e: self._react_to_compile_button_click())
     
     def _react_to_play_button_click(self):
         self.actions_controller.handle_play()
+    
+    def _react_to_file_open_button_click(self):
+        self.actions_controller.handle_file_open()
         
+    def _react_to_compile_button_click(self):
+        self._handle_compile()
 
-    def _create_file_button(self):
-        tk.Button(self.root, text="Abrir Arquivo de Texto", command=self._handle_file_open).pack()
 
-    def _create_compile_button(self):
-        tk.Button(
-            self.root,
-            text="Compilar",
-            command=self._handle_compile
-        ).pack(pady=10)
-    
-    '''def _create_play_button(self):
-        tk.Button(
-            self.root,
-            text="Tocar MIDI",
-            command=self._handle_play
-        ).pack(pady=10)'''
-    
-    '''def _handle_play(self):
-            self.play_callback()'''
-    
     def _create_error_label(self):
         self.error_label = tk.Label(self.root, text="", fg="red", font=("Arial", 10, "bold"))
         self.error_label.pack(pady=(0, 5))
@@ -143,21 +131,6 @@ class GUI:
             "Harmonica": 72
         }
 
-    def _handle_file_open(self):
-        path = filedialog.askopenfilename(parent=self.root)
-        if not path:
-            return
-
-        self.on_load_callback(path)
-
-        error = self.has_error_callback()
-        if error:
-            self._show_error(error)
-            return
-
-        self._load_text_to_area()
-        self._update_voices_number_from_board()
-    
     def _show_error(self, message):
         self.error_label.config(text=message)
         self.root.after(ERROR_DISPLAY_DURATION, lambda: self.error_label.config(text=""))
@@ -237,6 +210,9 @@ class GUI:
     ##############################################
     # Public methods to interact with the GUI:
     ##############################################
+
+    def set_actions_controller(self, actions_controller):
+        self.actions_controller = actions_controller
 
     def run(self):
         self.root.mainloop()
