@@ -73,6 +73,15 @@ class EFlatRule(Mapping):
     def RuleApply(self, text: str, index: int):
         pass # Associa Mi bemol ao devido lugar
 
+@Mapping.register('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h')
+class LowerCasePauseRule(Mapping):
+    def RuleCheck(self, text: str, index: int) -> int:
+        return RULE_VALID_VALUE
+
+    def RuleApply(self,char: str, midiTrack: MidiTrack):
+        pause = mido.Message('note_off', note=0, velocity=0, time=480)
+        midiTrack.append(pause)
+
 @Mapping.register(is_default=True)
 class DefaultRule(Mapping):
     def RuleCheck(self, text: str, index: int) -> int:
