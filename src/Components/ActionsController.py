@@ -5,39 +5,33 @@ ERROR_DISPLAY_DURATION = 3000
 
 
 class ActionsController:
-    def __init__(self, gui, callback_commander):
-        self.gui = gui
+    def __init__(self, midi_player, text_operator, midi_writer):
+        self.midi_player = midi_player
+        self.text_operator = text_operator
+        self.midi_writer = midi_writer
 
-        self.on_load_callback = callback_commander.get("load_data")
-        self.get_text_callback = callback_commander.get("getText")
-        self.has_error_callback = callback_commander.get("has_error")
-        self.play_midi_callback = callback_commander.get("play_midi")
+    def trigger_play(self):
+        self.midi_player.play()
 
-    def handle_file_open(self):
-        path = filedialog.askopenfilename(parent=self.gui.root)
+    def trigger_load_data(self, path):
+        self.text_operator.load_data(path)
 
-        if not path:
-            return
+    def trigger_get_text(self):
+        return self.text_operator.getText()
+    
+    def trigger_has_error(self):
+        return self.text_operator.has_error()
+    
+    def trigger_get_current_voice(self, index):
+        return self.midi_writer.get_voice_from_index(index)
+    
+    def trigger_set_text(self, text):
+        self.text_operator.setText(text)
+    
+    def trigger_compile(self):
+        self.midi_writer.create_voices()
+        self.midi_writer.append_tracks_to_midi_file()
+        temp_midi_path = self.midi_writer.create_temp_midi_file()
+        self.midi_player.set_midi_temp(temp_midi_path)
 
-        self.on_load_callback(path)
-
-        error = self.has_error_callback()
-
-        if error:
-            self.gui.error_label.config(text=error)
-
-            self.gui.root.after(
-                ERROR_DISPLAY_DURATION,
-                lambda: self.gui.error_label.config(text="")
-            )
-
-            return
-
-        content = "\n".join(self.get_text_callback())
-
-        self.gui.text_area.delete("1.0", tk.END)
-        self.gui.text_area.insert("1.0", content)
-        self.gui._update_voices_number_from_board()
-
-    def handle_play(self):
-        self.play_midi_callback()
+        self.midi_writer.cleanup()

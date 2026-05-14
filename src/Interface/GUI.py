@@ -1,24 +1,13 @@
 import tkinter as tk
 from tkinter import filedialog, ttk
-
 from src.Interface.Modules.Buttons import Buttons
-from src.Components.MIDIPlayer import MIDIPlayer
 
 ERROR_DISPLAY_DURATION = 3000  # Duration to display error messages in milliseconds
 
 class GUI:
-    def __init__(self, callback_commander):
-        self.on_load_callback = callback_commander.get("load_data")
-        self.getText_callback = callback_commander.get("getText")
-        self.has_error_callback = callback_commander.get("has_error")
-        self.get_current_voice_callback = callback_commander.get("get_current_voice")
-        self.create_voices_callback = callback_commander.get("create_voices")
-        self.update_text_callback = callback_commander.get("update_text")
-        self.compile_tracks_callback = callback_commander.get("compile_tracks")
-        self.create_temp_midi_file_callback = callback_commander.get("create_temp_midi_file")
-        self.cleanup_callback = callback_commander.get("cleanup")
-        self.set_temp_midi_path_callback = callback_commander.get("set_temp_midi_path")
-
+    def __init__(self, actions_controller):
+        
+        self.actions_controller = actions_controller
 
         self.selected_voice_index = None
         self.voices_number = 0
@@ -27,8 +16,6 @@ class GUI:
         self.root.title("MIDI Converter")
 
         self.instruments = self._create_instrument_map()
-
-        self.actions_controller = None
 
         self._build_layout()
         self._create_binds()
@@ -57,14 +44,13 @@ class GUI:
         self.root.bind("<<compile>>", lambda e: self._react_to_compile_button_click())
     
     def _react_to_play_button_click(self):
-        self.actions_controller.handle_play()
+        self.actions_controller.trigger_play()
     
     def _react_to_file_open_button_click(self):
-        self.actions_controller.handle_file_open()
+        self._handle_file_open()
         
     def _react_to_compile_button_click(self):
         self._handle_compile()
-
 
     def _create_error_label(self):
         self.error_label = tk.Label(self.root, text="", fg="red", font=("Arial", 10, "bold"))
@@ -108,7 +94,7 @@ class GUI:
     ##############################################
     
     def _handle_text_change(self, event=None):
-        self.update_text_callback(self.text_area.get("1.0", tk.END))
+        self.actions_controller.trigger_set_text(self.text_area.get("1.0", tk.END))
         self._update_voices_number_from_board()
 
     def _get_instrument_name_from_value(self, instrument_value):
@@ -136,7 +122,7 @@ class GUI:
         self.root.after(ERROR_DISPLAY_DURATION, lambda: self.error_label.config(text=""))
 
     def _load_text_to_area(self):
-        content = "\n".join(self.getText_callback())
+        content = "\n".join(self.actions_controller.trigger_get_text())
 
         self.text_area.delete("1.0", tk.END) # Clear existing content before inserting new text
         self.text_area.insert("1.0", content)
@@ -170,9 +156,7 @@ class GUI:
         self._sync_instrument_with_voice()
     
     def _sync_instrument_with_voice(self):
-        voice = self.get_current_voice_callback(
-            self.selected_voice_index
-        )
+        voice = self.actions_controller.trigger_get_current_voice(self.selected_voice_index)
 
         if voice:
             instrument_value = voice.getInitialInstrument()
@@ -190,29 +174,35 @@ class GUI:
         selected_instrument = self.instrument_combobox.get()
         if selected_instrument in self.instruments:
             instrument_value = self.instruments[selected_instrument]
-            voice = self.get_current_voice_callback(self.selected_voice_index)
+            voice = self.actions_controller.trigger_get_current_voice(self.selected_voice_index)
             if voice:
                 voice.setInitialInstrument(instrument_value) # <--- Verificar se isso fere algo
     
+    def _handle_file_open(self):
+        path = filedialog.askopenfilename(parent=self.root)
+
+        if not path:
+            return
+
+        self.actions_controller.trigger_load_data(path)
+
+        error = self.actions_controller.trigger_has_error()
+
+        if error:
+            self._show_error(error)
+            return
+
+        self._load_text_to_area()
+        self._update_voices_number_from_board()
+
 
     def _handle_compile(self):
-        self.update_text_callback(
-            self.text_area.get("1.0", tk.END)
-        )
-
-        self.create_voices_callback()
-        self.compile_tracks_callback()
-        temp_midi_path = self.create_temp_midi_file_callback()
-        self.set_temp_midi_path_callback(temp_midi_path)
-
-        self.cleanup_callback()
+        self.actions_controller.trigger_set_text(self.text_area.get("1.0", tk.END))
+        self.actions_controller.trigger_compile()
 
     ##############################################
     # Public methods to interact with the GUI:
     ##############################################
-
-    def set_actions_controller(self, actions_controller):
-        self.actions_controller = actions_controller
 
     def run(self):
         self.root.mainloop()

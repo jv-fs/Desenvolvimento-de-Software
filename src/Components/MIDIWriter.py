@@ -1,7 +1,7 @@
 import tempfile
 from pathlib import Path
 
-from src.DataClasses.Voice import Voice
+from src.Components.Voice import Voice
 from mido import MidiFile, MidiTrack, Message
 
 class MIDIWriter:
