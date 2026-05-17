@@ -36,18 +36,17 @@ class Voice:
 
     def append_midi_message(self, message: str, control: int, value: int, time: int = 0):
         self.midiTrack.append(Message(message, channel=self.channel, control=control, value=value, time=time))
-    
-    
+        
     def generate_and_get_track(self) -> MidiTrack:
         i = 0
         while i < len(self.text):
             char = self.text[i]
             rules = Mapping.registry.get(char, Mapping.registry.get('default')) # Tries to get the rules for the character, if not found, gets the default rule
             applied = False
-            for rule in rules:
+            for rule in rules: # Checks the rules for the character, if a rule is valid, applies it and breaks the loop to check the next character
                 validation = rule.RuleCheck(self.text, i)
-                if validation > 0:
-                    rule.RuleApply(char, self.midiTrack)
+                if validation > 0: # If the rule is valid, applies it and moves the index according to the validation value (some rules may need to jump more than one character)
+                    rule.RuleApply(char, self)
                     i += validation
                     applied = True
                     break # If a rule is applied, break the loop to check the next character
