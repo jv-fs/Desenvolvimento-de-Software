@@ -2,11 +2,11 @@ from mido import Message, MidiTrack
 from src.Components.Mapping import *
 
 class Voice:
-    def __init__(self, text: str, instrument: int, volume: int, tonality: str):
+    def __init__(self, text: str, instrument: int, volume: int, octave: int):
         self.text = text
         self.initial_instrument = instrument
         self.initial_volume = volume
-        self.initial_tonality = tonality
+        self.initial_octave = octave
         self.channel = 0  # Default MIDI channel, can be set later
         self.midiTrack = MidiTrack()
 
@@ -22,8 +22,8 @@ class Voice:
     def setInitialVolume(self, volume: int):
         self.initial_volume = volume
 
-    def setInitialTonality(self, tonality: str):
-        self.initial_tonality = tonality
+    def setInitialOctave(self, octave: int):
+        self.initial_octave = octave
     
     def getInitialInstrument(self):
         return self.initial_instrument
@@ -31,8 +31,11 @@ class Voice:
     def getInitialVolume(self):
         return self.initial_volume
     
-    def getInitialTonality(self):
-        return self.initial_tonality
+    def getInitialOctave(self):
+        return self.initial_octave
+    
+    def getOctaveOffset(self):
+        return (self.initial_octave - 4) * 12 # Assuming octave 4 is the base octave
 
     def append_midi_message(self, message: str, control: int, value: int, time: int = 0):
         self.midiTrack.append(Message(message, channel=self.channel, control=control, value=value, time=time))

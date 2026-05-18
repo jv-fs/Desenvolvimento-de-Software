@@ -12,6 +12,8 @@ TICKS_PER_BEAT = 480 # one beat is 480 ticks.
 INITIAL_BPM = 120
 MINIMUM_BPM = 10
 MAXIMUM_BPM = 300
+MINIMUM_OCTAVE = 3
+MAXIMUM_OCTAVE = 6
 
 global_music_state = {##TO DO: Dessa forma o bpm segue acumulando para cada compilação e nunca reseta (só se fechar o app).
     'current_bpm': INITIAL_BPM
@@ -72,9 +74,9 @@ class NoteRule(Mapping):
 
     def RuleApply(self, char: str, voice: 'Voice'): # Colocar um try seria legal talvez?
         note = noteDictionary.get(char)
-        note_on = mido.Message('note_on', note=note, velocity=64, time=0)
+        note_on = mido.Message('note_on', note=note+voice.getOctaveOffset(), velocity=64, time=0)
 
-        note_off = mido.Message('note_off', note=note, velocity=64, time=TICKS_PER_BEAT)
+        note_off = mido.Message('note_off', note=note+voice.getOctaveOffset(), velocity=64, time=TICKS_PER_BEAT)
         voice.midiTrack.append(note_on)
         voice.midiTrack.append(note_off)
 
@@ -125,6 +127,27 @@ class InstrumentChangeRule(Mapping):
         program_change_message = mido.Message('program_change', program=instrument_value, time=0)
         voice.midiTrack.append(program_change_message)
         voice.setInitialInstrument(instrument_value) 
+
+@Mapping.register('V', '?')
+class OctaveControlRule(Mapping):
+
+    def RuleCheck(self, text: str, char_index: int) -> int:
+        return RULE_VALID_VALUE
+    
+    def RuleApply(self, char: str, voice: 'Voice'):
+        # Respects the interval of octaves defined by MINIMUM_OCTAVE and MAXIMUM_OCTAVE 
+        # If the new octave goes below the minimum, it should wrap around to the maximum.
+        current_octave = voice.getInitialOctave()
+        
+        if char == 'V':
+            new_octave = current_octave - 1 
+            if  (new_octave) <  MINIMUM_OCTAVE:
+                new_octave = MAXIMUM_OCTAVE 
+        else:
+            new_octave = current_octave + 1
+            if  (new_octave) >  MAXIMUM_OCTAVE:
+                new_octave = MINIMUM_OCTAVE
+        voice.setInitialOctave(new_octave)  
 
 @Mapping.register('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h')
 class LowerCasePauseRule(Mapping):
