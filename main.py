@@ -4,7 +4,6 @@ from src.Components.MIDIWriter import MIDIWriter
 from src.Interface.GUI import GUI
 from src.Components.ActionsController import ActionsController
 
-
 def main():
     text_operator = TextOperator()
     midi_writer = MIDIWriter(mapping={}, text_operator=text_operator)  
@@ -24,7 +23,6 @@ def main():
         "set_temp_midi_path": midi_player.set_midi_temp,
         "play_midi": midi_player.play
     }
-
     
     gui = GUI(callback_commander=callback_commander)
     actions_controller = ActionsController(gui, callback_commander)

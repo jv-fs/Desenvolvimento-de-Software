@@ -43,7 +43,6 @@ class Mapping(ABC):
 
 @Mapping.register('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H')
 class NoteRule(Mapping):
-
     def RuleCheck(self, text: str, char_index: int) -> int:
         return MappingConstants.RULE_VALID_VALUE
 
@@ -74,7 +73,6 @@ class EFlatRule(Mapping):
 
 @Mapping.register('>', '<')
 class BPMControlRule(Mapping):
-
     def RuleCheck(self, text: str, char_index: int) -> int:
         return MappingConstants.RULE_VALID_VALUE
     
@@ -94,7 +92,6 @@ class BPMControlRule(Mapping):
 
 @Mapping.register('!', ';', ',')
 class InstrumentChangeRule(Mapping):
-
     def RuleCheck(self, text: str, char_index: int) -> int:
         return MappingConstants.RULE_VALID_VALUE
     
@@ -106,7 +103,6 @@ class InstrumentChangeRule(Mapping):
 
 @Mapping.register('V', '?')
 class OctaveControlRule(Mapping):
-
     def RuleCheck(self, text: str, char_index: int) -> int:
         return MappingConstants.RULE_VALID_VALUE
     
