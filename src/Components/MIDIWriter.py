@@ -2,6 +2,7 @@ import tempfile
 from pathlib import Path
 
 from src.DataClasses.Voice import Voice
+from src.DataClasses.VoiceSpecs import VoiceSpecs
 from mido import MidiFile, MidiTrack, Message
 
 class MIDIWriter:
@@ -19,17 +20,18 @@ class MIDIWriter:
     def _reset_voices(self):
         self.voices = []
     
-    def _create_voice(self, text: str, instrument: int, volume: int, octave: int):
-        voice = Voice(text, instrument, volume, octave)
+    def _create_voice(self, text: str, instrument: int, voice_index: int):
+        voice_specs = VoiceSpecs(instrument, voice_index)
+        voice = Voice(text, voice_specs)
         self.voices.append(voice)
     
     def create_voices(self):
         text = self.text_operator.getText()
         if text is not None:
             self._reset_voices()  # Clear existing voices before creating new ones
-            for line in text.splitlines():
+            for i, line in enumerate(text.splitlines()):
                 if line.strip():  # Only create a voice for non-empty lines
-                    self._create_voice(line, instrument=1, volume=100, octave=4) # Example values, customize this based on mapping logic
+                    self._create_voice(line, instrument=1,  voice_index=i) # Example values, customize this based on mapping logic
     
     def get_voice_from_index(self, index: int):
         if index is not None and index < len(self.voices):
