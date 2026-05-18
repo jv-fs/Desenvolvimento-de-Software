@@ -19,7 +19,7 @@ global_music_state = {##TO DO: Dessa forma o bpm segue acumulando para cada comp
     'current_bpm': INITIAL_BPM
 }
 
-noteDictionary = { # starts by central octave
+note_dictionary = { # starts by central octave
         'C': 60, # C4
         'D': 62,  # D4
         'Mb': 63, # Eb4
@@ -31,7 +31,7 @@ noteDictionary = { # starts by central octave
         'B': 71  # B4
     }
 
-instrumentDictionary = {
+instrument_dictionary = {
     '!': 22, # Harmonica
     ';': 15, # Tubular Bells
     ',': 20, # Church Organ
@@ -73,7 +73,7 @@ class NoteRule(Mapping):
         return RULE_VALID_VALUE
 
     def RuleApply(self, char: str, voice: 'Voice'): # Colocar um try seria legal talvez?
-        note = noteDictionary.get(char)
+        note = note_dictionary.get(char)
         note_on = mido.Message('note_on', note=note+voice.getOctaveOffset(), velocity=64, time=0)
 
         note_off = mido.Message('note_off', note=note+voice.getOctaveOffset(), velocity=64, time=TICKS_PER_BEAT)
@@ -89,10 +89,10 @@ class EFlatRule(Mapping):
             return RULE_INVALID_VALUE
 
     def RuleApply(self, char: str, voice: 'Voice'):
-        note = noteDictionary.get('Mb')
-        note_on = mido.Message('note_on', note=note, velocity=64, time=0)
+        note = note_dictionary.get('Mb')
+        note_on = mido.Message('note_on', note=note+voice.getOctaveOffset(), velocity=64, time=0)
 
-        note_off = mido.Message('note_off', note=note, velocity=64, time=TICKS_PER_BEAT)
+        note_off = mido.Message('note_off', note=note+voice.getOctaveOffset(), velocity=64, time=TICKS_PER_BEAT)
         voice.midiTrack.append(note_on)
         voice.midiTrack.append(note_off)
 
@@ -123,7 +123,7 @@ class InstrumentChangeRule(Mapping):
         return RULE_VALID_VALUE
     
     def RuleApply(self, char: str, voice: 'Voice'):
-        instrument_value = instrumentDictionary.get(char)
+        instrument_value = instrument_dictionary.get(char)
         program_change_message = mido.Message('program_change', program=instrument_value, time=0)
         voice.midiTrack.append(program_change_message)
         voice.setInitialInstrument(instrument_value) 
@@ -181,8 +181,29 @@ class initialPausesRule(Mapping):
 
 @Mapping.register(is_default=True)
 class DefaultRule(Mapping):
-    def RuleCheck(self, text: str, index: int) -> int:
-        return 1
+    previous_note = None
+    def RuleCheck(self, text: str, char_index: int) -> int:
+        previous_char = text[char_index - 1] if char_index > 0 else ""
+        previous_previous_char = text[char_index - 2] if char_index > 1 else ""
+        
+        if (previous_char in note_dictionary):
+            self.previous_note = previous_char
+        elif (previous_previous_char + previous_char in note_dictionary):
+            self.previous_note = previous_previous_char + previous_char
+        else:
+            self.previous_note = None
 
-    def RuleApply(self, char: str, midiTrack: MidiTrack):
-        pass # Regra padrão para caracteres sem mapeamento específico
+        return RULE_VALID_VALUE
+
+    def RuleApply(self, char: str, voice: 'Voice'):
+        if self.previous_note:
+            note = note_dictionary.get(self.previous_note)
+            note_on = mido.Message('note_on', note=note+voice.getOctaveOffset(), velocity=64, time=0)
+
+            note_off = mido.Message('note_off', note=note+voice.getOctaveOffset(), velocity=64, time=TICKS_PER_BEAT)
+            voice.midiTrack.append(note_on)
+            voice.midiTrack.append(note_off)
+            
+        else:
+            pause = mido.Message('note_off', note=0, velocity=0, time=TICKS_PER_BEAT)
+            voice.midiTrack.append(pause)
