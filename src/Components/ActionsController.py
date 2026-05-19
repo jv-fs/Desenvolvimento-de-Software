@@ -12,6 +12,15 @@ class ActionsController:
 
     def trigger_play(self):
         self.midi_player.play()
+    
+    def trigger_stop(self):
+        self.midi_player.stop()
+
+    def trigger_restart(self):
+        self.midi_player.restart()
+    
+    def trigger_loop(self):
+        self.midi_player.toggle_loop()
 
     def trigger_load_data(self, path):
         self.text_operator.load_data(path)

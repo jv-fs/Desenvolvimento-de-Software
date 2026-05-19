@@ -11,6 +11,27 @@ class Buttons:
             command= lambda: self.root.event_generate("<<play>>")
         ).pack(pady=10)
 
+    def create_stop_button(self):
+        tk.Button(
+            self.root,
+            text="Stop",
+            command= lambda: self.root.event_generate("<<stop>>")
+        ).pack(pady=10)
+    
+    def create_restart_button(self):
+        tk.Button(
+            self.root,
+            text="Restart",
+            command= lambda: self.root.event_generate("<<restart>>")
+        ).pack(pady=10)
+
+    def create_loop_button(self):
+        tk.Button(
+            self.root,
+            text="Loop",
+            command= lambda: self.root.event_generate("<<loop>>")
+        ).pack(pady=10)
+
     def create_file_button(self):
         tk.Button(
             self.root,

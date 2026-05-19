@@ -37,14 +37,29 @@ class GUI:
         self._create_text_area()
 
         self.buttons.create_play_button()
-    
+        self.buttons.create_stop_button()
+        self.buttons.create_restart_button()
+        self.buttons.create_loop_button()
+
     def _create_binds(self):
         self.root.bind("<<play>>", lambda e: self._react_to_play_button_click())
+        self.root.bind("<<stop>>", lambda e: self._react_to_stop_button_click())
+        self.root.bind("<<restart>>", lambda e: self._react_to_restart_button_click())
+        self.root.bind("<<loop>>", lambda e: self._react_to_loop_button_click())
         self.root.bind("<<file_open>>", lambda e: self._react_to_file_open_button_click())
         self.root.bind("<<compile>>", lambda e: self._react_to_compile_button_click())
     
     def _react_to_play_button_click(self):
         self.actions_controller.trigger_play()
+
+    def _react_to_stop_button_click(self):
+        self.actions_controller.trigger_stop()
+    
+    def _react_to_restart_button_click(self):
+        self.actions_controller.trigger_restart()
+    
+    def _react_to_loop_button_click(self):
+        self.actions_controller.trigger_loop()
     
     def _react_to_file_open_button_click(self):
         self._handle_file_open()
