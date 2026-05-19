@@ -19,6 +19,7 @@ class MappingConstants:
     INITIAL_BPM = 120
     MINIMUM_BPM = 10
     MAXIMUM_BPM = 300
+    BPM_STEP = 10
 
 class RulesConstants:
     intrument_rules_characters = {

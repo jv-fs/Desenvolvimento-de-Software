@@ -8,9 +8,25 @@ from src.DataClasses.VoiceSpecs import VoiceSpecs
 from src.DataClasses.ProjectConfigs import MappingConstants, InitialInstruments, RulesConstants, VoiceConstants
 from src.DataClasses.MIDITable import Instruments, Notes
 
-global_music_state = {##TO DO: Dessa forma o bpm segue acumulando para cada compilação e nunca reseta (só se fechar o app).
-    'current_bpm': MappingConstants.INITIAL_BPM
-}
+
+class MusicState:
+    current_bpm = MappingConstants.INITIAL_BPM
+
+    @classmethod
+    def reset(cls):
+        cls.current_bpm = MappingConstants.INITIAL_BPM
+    
+    @classmethod
+    def increase_bpm(cls):
+        cls.current_bpm = min(MappingConstants.MAXIMUM_BPM, cls.current_bpm + MappingConstants.BPM_STEP) # BPM should not go above MAXIMUM_BPM
+    
+    @classmethod
+    def decrease_bpm(cls):
+        cls.current_bpm = max(MappingConstants.MINIMUM_BPM, cls.current_bpm - MappingConstants.BPM_STEP) # BPM should not go below MINIMUM_BPM
+    
+    @classmethod
+    def get_current_bpm(cls):
+        return cls.current_bpm
 
 class Mapping(ABC):
     registry = defaultdict(list)
@@ -78,15 +94,12 @@ class BPMControlRule(Mapping):
     
     def RuleApply(self, char: str, midiTrack: MidiTrack, voice_specs: VoiceSpecs):
 
-        step = 10
-
         if char == '>':
-            global_music_state['current_bpm'] = min(MappingConstants.MAXIMUM_BPM, global_music_state['current_bpm'] + step) # BPM should not go above MAXIMUM_BPM
+            MusicState.increase_bpm()
         else:
-            global_music_state['current_bpm'] = max(MappingConstants.MINIMUM_BPM, global_music_state['current_bpm'] - step) # BPM should not go below MINIMUM_BPM
+            MusicState.decrease_bpm()
 
-        print(f"Current BPM: {global_music_state['current_bpm']}")
-        new_tempo = mido.bpm2tempo(global_music_state['current_bpm'])
+        new_tempo = mido.bpm2tempo(MusicState.current_bpm)
         tempo_message = mido.MetaMessage('set_tempo', tempo=new_tempo, time=0)
         midiTrack.append(tempo_message)
 
