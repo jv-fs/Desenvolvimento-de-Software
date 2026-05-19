@@ -1,53 +1,38 @@
 from mido import Message, MidiTrack
 from src.Components.Mapping import *
 
+from src.Utils.MIDITable import Instruments, Notes 
+from src.DataClasses.ProjectConfigs import VoiceConstants
+from src.DataClasses.VoiceSpecs import VoiceSpecs
+
 class Voice:
-    def __init__(self, text: str, instrument: int, volume: int, tonality: str):
+    def __init__(self, text: str, voice_specs: VoiceSpecs):
         self.text = text
-        self.initial_instrument = instrument
-        self.initial_volume = volume
-        self.initial_tonality = tonality
-        self.channel = 0  # Default MIDI channel, can be set later
+        self.voice_specs = voice_specs
         self.midiTrack = MidiTrack()
 
     def setText(self, text: str):
         self.text = text
-
-    def setChannel(self, channel: int):
-        self.channel = channel
-
-    def setInitialInstrument(self, instrument: int):
-        self.initial_instrument = instrument
-
-    def setInitialVolume(self, volume: int):
-        self.initial_volume = volume
-
-    def setInitialTonality(self, tonality: str):
-        self.initial_tonality = tonality
     
-    def getInitialInstrument(self):
-        return self.initial_instrument
+    def getInstrument(self):
+        return self.voice_specs.getInstrument()
     
-    def getInitialVolume(self):
-        return self.initial_volume
+    def getVolume(self):
+        return self.voice_specs.getVolume()
     
-    def getInitialTonality(self):
-        return self.initial_tonality
-
-    def append_midi_message(self, message: str, control: int, value: int, time: int = 0):
-        self.midiTrack.append(Message(message, channel=self.channel, control=control, value=value, time=time))
-    
-    
+    def getOctave(self):
+        return self.voice_specs.getOctave()
+        
     def generate_and_get_track(self) -> MidiTrack:
         i = 0
         while i < len(self.text):
             char = self.text[i]
             rules = Mapping.registry.get(char, Mapping.registry.get('default')) # Tries to get the rules for the character, if not found, gets the default rule
             applied = False
-            for rule in rules:
+            for rule in rules: # Checks the rules for the character, if a rule is valid, applies it and breaks the loop to check the next character
                 validation = rule.RuleCheck(self.text, i)
-                if validation > 0:
-                    rule.RuleApply(char, self.midiTrack)
+                if validation > 0: # If the rule is valid, applies it and moves the index according to the validation value (some rules may need to jump more than one character)
+                    rule.RuleApply(char, self.midiTrack, self.voice_specs)
                     i += validation
                     applied = True
                     break # If a rule is applied, break the loop to check the next character

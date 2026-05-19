@@ -4,7 +4,6 @@ from src.Components.MIDIWriter import MIDIWriter
 from src.Interface.GUI import GUI
 from src.Components.ActionsController import ActionsController
 
-
 def main():
     text_operator = TextOperator()
     midi_writer = MIDIWriter(mapping={}, text_operator=text_operator)  
