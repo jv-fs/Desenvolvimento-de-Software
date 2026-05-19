@@ -6,7 +6,7 @@ import mido
 
 from src.DataClasses.VoiceSpecs import VoiceSpecs
 from src.DataClasses.ProjectConfigs import MappingConstants, InitialInstruments, RulesConstants, VoiceConstants
-from src.DataClasses.MIDITable import Instruments, Notes
+from src.Utils.MIDITable import Instruments, Notes
 
 
 class MusicState:

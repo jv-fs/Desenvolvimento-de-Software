@@ -1,7 +1,7 @@
 from mido import Message, MidiTrack
 from src.Components.Mapping import *
 
-from src.DataClasses.MIDITable import Instruments, Notes 
+from src.Utils.MIDITable import Instruments, Notes 
 from src.DataClasses.ProjectConfigs import VoiceConstants
 from src.DataClasses.VoiceSpecs import VoiceSpecs
 

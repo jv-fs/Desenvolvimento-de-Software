@@ -1,4 +1,4 @@
-from src.DataClasses.MIDITable import Instruments, Notes 
+from src.Utils.MIDITable import Instruments, Notes 
 from src.DataClasses.ProjectConfigs import VoiceConstants
 
 class VoiceSpecs():
