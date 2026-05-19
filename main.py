@@ -1,13 +1,17 @@
+from src.Components.MIDIPlayer import MIDIPlayer
 from src.Hooks.TextOperator import TextOperator
-from src.Utils.VoiceFactory import VoiceFactory
 from src.Components.MIDIWriter import MIDIWriter
-from src.Components.GUI import GUI
+from src.Interface.GUI import GUI
+from src.Components.ActionsController import ActionsController
 
 
 def main():
     text_operator = TextOperator()
-    midi_writer = MIDIWriter(mapping={})  # AQUI VAI O MAPEAMENTO REAL PARA CONVERSÃO DE TEXTO PARA MIDI (tem que pensar melhor aqui)
-    gui = GUI(on_load_callback=text_operator.load_data)
+    midi_writer = MIDIWriter(mapping={}, text_operator=text_operator)  
+    midi_player = MIDIPlayer()
+    actions_controller = ActionsController(midi_player=midi_player, text_operator=text_operator, midi_writer=midi_writer)
+
+    gui = GUI(actions_controller=actions_controller)
     gui.run()
 
 if __name__ == "__main__":
