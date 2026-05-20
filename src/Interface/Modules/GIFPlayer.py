@@ -15,6 +15,7 @@ class GIFPlayer:
         self.frames = []
         self.current_frame = CURRENT_FRAME
         self.is_animating = False
+        self.is_visible = True
 
         self._load_frames()
 
@@ -50,10 +51,12 @@ class GIFPlayer:
         self.is_animating = True
 
         self._animate()
+        self._show()
 
     def stop(self):
 
         self.is_animating = False
+        self._hide()
 
     def _animate(self):
 
@@ -73,3 +76,21 @@ class GIFPlayer:
             self.frame_delay,
             self._animate
         )
+
+    def _hide(self):
+
+        if not self.is_visible:
+            return
+
+        self.label.pack_forget()
+
+        self.is_visible = False
+        
+    def _show(self):
+
+        if self.is_visible:
+            return
+
+        self.label.pack()
+
+        self.is_visible = True

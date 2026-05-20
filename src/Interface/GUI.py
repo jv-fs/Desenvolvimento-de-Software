@@ -23,7 +23,7 @@ class GUI:
         self._build_layout()
         self._create_binds()
 
-        self._update_buttons()
+        self._update_interface()
 
 
     ##############################################
@@ -40,6 +40,8 @@ class GUI:
         self.right_frame = tk.Frame(self.main_frame)
         self.right_frame.pack(side=tk.LEFT, padx=20)
 
+        self.gif_player = GIFPlayer(self.main_frame,"assets/rick-astley.gif")
+
         self.side_buttons = Buttons(self.right_frame)
       
         self.bottom_buttons_frame = tk.Frame(self.root)
@@ -51,7 +53,7 @@ class GUI:
         self._create_voice_selector()
         self._create_instrument_selector()
         self._create_text_area()
-        
+       
         self.side_buttons.create_file_button()
         
         self.player_buttons.create_compile_button()    
@@ -96,7 +98,7 @@ class GUI:
     def _react_to_compile_button_click(self):
         self._handle_compile()
 
-    def _update_buttons(self):
+    def _update_interface(self):
         is_playing = self.actions_controller.trigger_get_is_playing()
         self.player_buttons.update_play_button(is_playing)
 
@@ -105,7 +107,12 @@ class GUI:
 
         self.player_buttons.update_compile_button(self.requires_compile)
 
-        self.root.after(100, self._update_buttons)
+        if is_playing:
+            self.gif_player.start()
+        else:
+            self.gif_player.stop()
+
+        self.root.after(100, self._update_interface)
 
 
     def _create_error_label(self):
