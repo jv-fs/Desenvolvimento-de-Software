@@ -44,3 +44,9 @@ class ActionsController:
         self.midi_player.set_midi_temp(temp_midi_path)
 
         self.midi_writer.cleanup()
+
+    def trigger_get_is_playing(self):
+        return self.midi_player.is_playing()
+    
+    def trigger_get_is_loop_enabled(self):
+        return self.midi_player.is_loop_enabled()

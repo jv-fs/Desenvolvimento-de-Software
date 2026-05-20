@@ -11,6 +11,8 @@ class GUI:
 
         self.selected_voice_index = None
         self.voices_number = 0
+
+        self.requires_compile = False
         
         self.root = tk.Tk()
         self.root.title("MIDI Converter")
@@ -19,6 +21,8 @@ class GUI:
 
         self._build_layout()
         self._create_binds()
+
+        self._update_buttons()
 
 
     ##############################################
@@ -50,6 +54,11 @@ class GUI:
         self.root.bind("<<compile>>", lambda e: self._react_to_compile_button_click())
     
     def _react_to_play_button_click(self):
+
+        if self.requires_compile:
+                self._show_error("Compile novamente antes de tocar.")
+                return
+
         self.actions_controller.trigger_play()
 
     def _react_to_stop_button_click(self):
@@ -66,6 +75,18 @@ class GUI:
         
     def _react_to_compile_button_click(self):
         self._handle_compile()
+
+    def _update_buttons(self):
+        is_playing = self.actions_controller.trigger_get_is_playing()
+        self.buttons.update_play_button(is_playing)
+
+        is_loop_enabled = self.actions_controller.trigger_get_is_loop_enabled()
+        self.buttons.update_loop_button(is_loop_enabled)
+
+        self.buttons.update_compile_button(self.requires_compile)
+
+        self.root.after(100, self._update_buttons)
+
 
     def _create_error_label(self):
         self.error_label = tk.Label(self.root, text="", fg="red", font=("Arial", 10, "bold"))
@@ -109,6 +130,9 @@ class GUI:
     ##############################################
     
     def _handle_text_change(self, event=None):
+
+        self.requires_compile = True
+
         self.actions_controller.trigger_set_text(self.text_area.get("1.0", tk.END))
         self._update_voices_number_from_board()
 
@@ -214,6 +238,8 @@ class GUI:
     def _handle_compile(self):
         self.actions_controller.trigger_set_text(self.text_area.get("1.0", tk.END))
         self.actions_controller.trigger_compile()
+
+        self.requires_compile = False
 
     ##############################################
     # Public methods to interact with the GUI:
