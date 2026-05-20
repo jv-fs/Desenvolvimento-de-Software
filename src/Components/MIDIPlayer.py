@@ -9,6 +9,8 @@ from mido import MidiFile
 
 
 EXTRA_TIME_AFTER_MIDI_END = 0.1
+TERMINATE_TIMEOUT = 1.0
+NEXT_PLAY= 1
 
 
 class PlaybackState(Enum):
@@ -75,7 +77,7 @@ class MIDIPlayer:
         if self.is_playing():
             return
 
-        self.playback_id += 1
+        self.playback_id += NEXT_PLAY
 
         current_playback_id = self.playback_id
 
@@ -90,7 +92,7 @@ class MIDIPlayer:
         self.playback_thread.start()
 
     def stop(self):
-        self.playback_id += 1
+        self.playback_id += NEXT_PLAY
         self.state = PlaybackState.STOPPED
 
         self._terminate_process()
@@ -163,7 +165,7 @@ class MIDIPlayer:
 
             try:
                 self.process.terminate()
-                self.process.wait(timeout=1)
+                self.process.wait(timeout=TERMINATE_TIMEOUT)
             except Exception:
                 pass
 

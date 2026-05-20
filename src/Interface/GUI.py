@@ -33,13 +33,14 @@ class GUI:
         
         self.buttons = Buttons(self.root)
         
-        self.buttons.create_file_button()
         self._create_error_label()
         self._create_voice_selector()
         self._create_instrument_selector()
-        self.buttons.create_compile_button()
         self._create_text_area()
 
+        
+        self.buttons.create_file_button()
+        self.buttons.create_compile_button()
         self.buttons.create_play_button()
         self.buttons.create_stop_button()
         self.buttons.create_restart_button()
@@ -65,6 +66,11 @@ class GUI:
         self.actions_controller.trigger_stop()
     
     def _react_to_restart_button_click(self):
+
+        if self.requires_compile:
+                self._show_error("Compile novamente antes de tocar.")
+                return  
+
         self.actions_controller.trigger_restart()
     
     def _react_to_loop_button_click(self):
@@ -233,6 +239,8 @@ class GUI:
 
         self._load_text_to_area()
         self._update_voices_number_from_board()
+
+        self.requires_compile = True
 
 
     def _handle_compile(self):

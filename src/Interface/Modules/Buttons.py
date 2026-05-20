@@ -1,5 +1,9 @@
 import tkinter as tk
 
+HORIZONTAL_PADDING = 5
+VERTICAL_PADDING = 10
+
+
 class Buttons:
     def __init__(self, root):
         self.root = root
@@ -16,7 +20,7 @@ class Buttons:
             fg=fg,
             command=lambda: self.root.event_generate(event)
         )
-        button.pack(pady=10)
+        button.pack(side=tk.LEFT, padx=HORIZONTAL_PADDING, pady=VERTICAL_PADDING)
         return button
 
     def create_play_button(self):
