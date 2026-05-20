@@ -28,23 +28,36 @@ class GUI:
     ##############################################
     #       Basic GUI setup and layout methods:
     ##############################################
-
     def _build_layout(self):
-        
-        self.buttons = Buttons(self.root)
-        
+
+        self.main_frame = tk.Frame(self.root)
+        self.main_frame.pack(padx=10, pady=10)
+
+        self.left_frame = tk.Frame(self.main_frame)
+        self.left_frame.pack(side=tk.LEFT, padx=20)
+
+        self.right_frame = tk.Frame(self.main_frame)
+        self.right_frame.pack(side=tk.LEFT, padx=20)
+
+        self.side_buttons = Buttons(self.right_frame)
+      
+        self.bottom_buttons_frame = tk.Frame(self.root)
+        self.bottom_buttons_frame.pack(pady=10)
+
+        self.player_buttons = Buttons(self.bottom_buttons_frame)
+
         self._create_error_label()
         self._create_voice_selector()
         self._create_instrument_selector()
         self._create_text_area()
-
         
-        self.buttons.create_file_button()
-        self.buttons.create_compile_button()
-        self.buttons.create_play_button()
-        self.buttons.create_stop_button()
-        self.buttons.create_restart_button()
-        self.buttons.create_loop_button()
+        self.side_buttons.create_file_button()
+        
+        self.player_buttons.create_compile_button()    
+        self.player_buttons.create_play_button()
+        self.player_buttons.create_stop_button()
+        self.player_buttons.create_restart_button()
+        self.player_buttons.create_loop_button()
 
     def _create_binds(self):
         self.root.bind("<<play>>", lambda e: self._react_to_play_button_click())
@@ -84,12 +97,12 @@ class GUI:
 
     def _update_buttons(self):
         is_playing = self.actions_controller.trigger_get_is_playing()
-        self.buttons.update_play_button(is_playing)
+        self.player_buttons.update_play_button(is_playing)
 
         is_loop_enabled = self.actions_controller.trigger_get_is_loop_enabled()
-        self.buttons.update_loop_button(is_loop_enabled)
+        self.player_buttons.update_loop_button(is_loop_enabled)
 
-        self.buttons.update_compile_button(self.requires_compile)
+        self.player_buttons.update_compile_button(self.requires_compile)
 
         self.root.after(100, self._update_buttons)
 
@@ -99,7 +112,7 @@ class GUI:
         self.error_label.pack(pady=(0, 5))
 
     def _create_voice_selector(self):
-        frame = tk.Frame(self.root)
+        frame = tk.Frame(self.left_frame)
         frame.pack(pady=10)
 
         tk.Label(frame, text="Selecionar Voz:").pack(side=tk.LEFT, padx=5)
@@ -111,7 +124,7 @@ class GUI:
         self._refresh_voice_selector()
 
     def _create_instrument_selector(self):
-        frame = tk.Frame(self.root)
+        frame = tk.Frame(self.left_frame)
         frame.pack(pady=10)
 
         tk.Label(frame, text="Instrumento:").pack(side=tk.LEFT, padx=5)
@@ -125,9 +138,9 @@ class GUI:
         self._sync_instrument_with_voice()
 
     def _create_text_area(self):
-        tk.Label(self.root, text="Digite a codificação da sua música:").pack()
+        tk.Label(self.right_frame, text="Digite a codificação da sua música:").pack()
 
-        self.text_area = tk.Text(self.root, height=10, width=40)
+        self.text_area = tk.Text(self.right_frame, height=10, width=40)
         self.text_area.pack(pady=10)
         self.text_area.bind("<KeyRelease>", self._handle_text_change)
 
