@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import filedialog, ttk
 from src.Interface.Modules.Buttons import Buttons
+from src.Interface.Modules.GIFPlayer import GIFPlayer
 
 ERROR_DISPLAY_DURATION = 3000  # Duration to display error messages in milliseconds
 
