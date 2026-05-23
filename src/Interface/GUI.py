@@ -77,6 +77,9 @@ class GUI:
                 self._refresh_error_label()
                 return
 
+        if not self._has_text_content():
+            return
+
         self.gif_player.start()
         self.actions_controller.trigger_play()
 
@@ -88,6 +91,9 @@ class GUI:
         if self.requires_compile:
                 self._refresh_error_label()
                 return  
+
+        if not self._has_text_content():
+            return
 
         self.gif_player.start()
         self.actions_controller.trigger_restart()
@@ -206,6 +212,9 @@ class GUI:
             messages.append(self.transient_error_message)
 
         self.error_label.config(text="\n".join(messages))
+
+    def _has_text_content(self):
+        return bool(self.text_area.get("1.0", tk.END).strip())
 
     def _load_text_to_area(self):
         content = "\n".join(self.actions_controller.trigger_get_text())
