@@ -14,6 +14,7 @@ class GUI:
         self.voices_number = 0
 
         self.requires_compile = False
+        self.transient_error_message = ""
         
         self.root = tk.Tk()
         self.root.title("MIDI Converter")
@@ -73,9 +74,10 @@ class GUI:
     def _react_to_play_button_click(self):
 
         if self.requires_compile:
-                self._show_error("Compile novamente antes de tocar.")
+                self._refresh_error_label()
                 return
 
+        self.gif_player.start()
         self.actions_controller.trigger_play()
 
     def _react_to_stop_button_click(self):
@@ -84,9 +86,10 @@ class GUI:
     def _react_to_restart_button_click(self):
 
         if self.requires_compile:
-                self._show_error("Compile novamente antes de tocar.")
+                self._refresh_error_label()
                 return  
 
+        self.gif_player.start()
         self.actions_controller.trigger_restart()
     
     def _react_to_loop_button_click(self):
@@ -96,6 +99,7 @@ class GUI:
         self._handle_file_open()
         
     def _react_to_compile_button_click(self):
+        self.actions_controller.trigger_stop()
         self._handle_compile()
 
     def _update_interface(self):
@@ -106,10 +110,9 @@ class GUI:
         self.player_buttons.update_loop_button(is_loop_enabled)
 
         self.player_buttons.update_compile_button(self.requires_compile)
+        self._refresh_error_label()
 
-        if is_playing:
-            self.gif_player.start()
-        else:
+        if not is_playing:
             self.gif_player.stop()
 
         self.root.after(100, self._update_interface)
@@ -159,6 +162,7 @@ class GUI:
     def _handle_text_change(self, event=None):
 
         self.requires_compile = True
+        self._refresh_error_label()
 
         self.actions_controller.trigger_set_text(self.text_area.get("1.0", tk.END))
         self._update_voices_number_from_board()
@@ -184,8 +188,24 @@ class GUI:
         }
 
     def _show_error(self, message):
-        self.error_label.config(text=message)
-        self.root.after(ERROR_DISPLAY_DURATION, lambda: self.error_label.config(text=""))
+        self.transient_error_message = message
+        self._refresh_error_label()
+        self.root.after(ERROR_DISPLAY_DURATION, self._clear_transient_error_message)
+
+    def _clear_transient_error_message(self):
+        self.transient_error_message = ""
+        self._refresh_error_label()
+
+    def _refresh_error_label(self):
+        messages = []
+
+        if self.requires_compile:
+            messages.append("Compile novamente antes de tocar.")
+
+        if self.transient_error_message:
+            messages.append(self.transient_error_message)
+
+        self.error_label.config(text="\n".join(messages))
 
     def _load_text_to_area(self):
         content = "\n".join(self.actions_controller.trigger_get_text())
@@ -262,6 +282,7 @@ class GUI:
         self._update_voices_number_from_board()
 
         self.requires_compile = True
+        self._refresh_error_label()
 
 
     def _handle_compile(self):
@@ -269,6 +290,7 @@ class GUI:
         self.actions_controller.trigger_compile()
 
         self.requires_compile = False
+        self._refresh_error_label()
 
     ##############################################
     # Public methods to interact with the GUI:
