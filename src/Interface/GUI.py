@@ -56,6 +56,7 @@ class GUI:
         self._create_text_area()
        
         self.side_buttons.create_file_button()
+        self.side_buttons.create_save_button()
         
         self.player_buttons.create_compile_button()    
         self.player_buttons.create_play_button()
@@ -70,7 +71,8 @@ class GUI:
         self.root.bind("<<loop>>", lambda e: self._react_to_loop_button_click())
         self.root.bind("<<file_open>>", lambda e: self._react_to_file_open_button_click())
         self.root.bind("<<compile>>", lambda e: self._react_to_compile_button_click())
-    
+        self.root.bind("<<save_file>>", lambda e: self._react_to_save_file_button_click())
+
     def _react_to_play_button_click(self):
 
         if self.requires_compile:
@@ -107,6 +109,16 @@ class GUI:
     def _react_to_compile_button_click(self):
         self.actions_controller.trigger_stop()
         self._handle_compile()
+
+    def _react_to_save_file_button_click(self):
+        if self.requires_compile:
+                self._refresh_error_label()
+                return  
+
+        if not self._has_text_content():
+            return
+        
+        self._handle_save_midi()
 
     def _update_interface(self):
         is_playing = self.actions_controller.trigger_get_is_playing()
@@ -297,6 +309,22 @@ class GUI:
     def _handle_compile(self):
         self.actions_controller.trigger_set_text(self.text_area.get("1.0", tk.END))
         self.actions_controller.trigger_compile()
+
+        self.requires_compile = False
+        self._refresh_error_label()
+
+    def _handle_save_midi(self):
+        
+        path = filedialog.asksaveasfilename(
+        parent=self.root,
+        defaultextension=".mid",
+        filetypes=[("MIDI files", "*.mid")]
+        )
+
+        if not path:
+            return
+
+        self.actions_controller.trigger_save_file(path)
 
         self.requires_compile = False
         self._refresh_error_label()

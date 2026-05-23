@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import filedialog
+from src.Utils.Exporter import ExportMidiFile
 
 ERROR_DISPLAY_DURATION = 3000
 
@@ -50,3 +51,11 @@ class ActionsController:
     
     def trigger_get_is_loop_enabled(self):
         return self.midi_player.is_loop_enabled()
+    
+    def trigger_save_file(self, destination_path):
+        ExportMidiFile.export(destination_path, self.midi_player.temp_midi_path)
+
+    def get_temp_midi_temp(self):
+        return self.midi_player.temp_midi_path
+    
+    

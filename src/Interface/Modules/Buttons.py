@@ -41,6 +41,9 @@ class Buttons:
     def create_compile_button(self):
         self.compile_button = self._create_button("Compilar", "<<compile>>", bg="purple", fg="white")
 
+    def create_save_button(self):
+        self._create_button("Salvar MIDI", "<<save_file>>", bg="brown", fg="white")
+
     def update_play_button(self, is_playing):
         if self.play_button:
             if is_playing:
