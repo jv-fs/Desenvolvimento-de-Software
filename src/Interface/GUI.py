@@ -57,6 +57,8 @@ class GUI:
        
         self.side_buttons.create_file_button()
         self.side_buttons.create_save_button()
+
+        self._create_volume_slider()
         
         self.player_buttons.create_compile_button()    
         self.player_buttons.create_play_button()
@@ -172,10 +174,33 @@ class GUI:
         self.text_area = tk.Text(self.right_frame, height=10, width=40)
         self.text_area.pack(pady=10)
         self.text_area.bind("<KeyRelease>", self._handle_text_change)
+    
+    def _create_volume_slider(self):
+        frame = tk.Frame(self.left_frame)
+        frame.pack(pady=10)
+
+        tk.Label(frame, text="Volume:").pack(side=tk.LEFT, padx=5)
+
+        self.volume_scale = tk.Scale(
+            frame,
+            from_=0.0,
+            to=1.5,
+            resolution=0.1,
+            orient=tk.HORIZONTAL,
+            command=self._handle_volume_change # Método chamado diretamenta pela ausência de um Event Bus (não necesário)
+        )
+
+        self.volume_scale.set(1.0)
+        self.volume_scale.pack(side=tk.LEFT, padx=5)
 
     ##############################################
     #              Handlers:
     ##############################################
+
+    def _handle_volume_change(self, value):
+        volume_float = float(value)
+        
+        self.actions_controller.trigger_set_volume(volume_float)
     
     def _handle_text_change(self, event=None):
 

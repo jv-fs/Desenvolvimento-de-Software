@@ -57,5 +57,8 @@ class ActionsController:
 
     def get_temp_midi_temp(self):
         return self.midi_player.temp_midi_path
+
+    def trigger_set_volume(self, volume: float):
+        self.midi_player.set_volume(volume)
     
     

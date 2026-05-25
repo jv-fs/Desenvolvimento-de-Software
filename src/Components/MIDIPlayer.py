@@ -101,6 +101,23 @@ class MIDIPlayer:
 
         self.stop()
         self.play()
+    
+    def set_volume(self, volume: float):
+        
+        if not self.process or self.process.poll() is not None:
+            return
+
+        try:
+            comando = f"gain {float(volume)}\n"
+            
+            # Envia o comando para o FluidSynth
+            self.process.stdin.write(comando)
+            
+            # Limpa o buffer para execução imediata
+            self.process.stdin.flush()
+            
+        except Exception as e:
+            print(f"Falha ao enviar comando de volume: {e}")
 
     ##################################################
     #                 Loop control:
@@ -156,7 +173,9 @@ class MIDIPlayer:
 
         self.process = subprocess.Popen(
             command,
-            creationflags=subprocess.CREATE_NO_WINDOW
+            creationflags=subprocess.CREATE_NO_WINDOW,
+            stdin=subprocess.PIPE,  # Habilita a entrada de comandos
+            text=True               # Trata a entrada como string (ao invés de bytes)
         )
 
     def _terminate_process(self):
@@ -188,7 +207,7 @@ class MIDIPlayer:
 
         return [
             str(self.fluidsynth_path),
-            "-i",
+            # "-i",  <- REMOVIDO: O shell precisa estar ativo para ouvir o 'stdin'
             "-a", "dsound",
             "-g", "1.0",
             str(self.soundfont_path),
