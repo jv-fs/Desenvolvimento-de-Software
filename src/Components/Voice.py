@@ -27,17 +27,20 @@ class Voice:
         i = 0
         while i < len(self.text):
             char = self.text[i]
-            rules = Mapping.registry.get(char, Mapping.registry.get('default')) # Tries to get the rules for the character, if not found, gets the default rule
+            rules = Mapping.registry.get(char, Mapping.registry.get('default'))
             applied = False
-            for rule in rules: # Checks the rules for the character, if a rule is valid, applies it and breaks the loop to check the next character
-                validation = rule.RuleCheck(self.text, i)
-                if validation > 0: # If the rule is valid, applies it and moves the index according to the validation value (some rules may need to jump more than one character)
-                    rule.RuleApply(char, self.midiTrack, self.voice_specs)
-                    i += validation
+
+            for rule in rules:
+                match_result = rule.RuleCheck(self.text, i)
+                
+                if match_result.is_match:
+                    rule.RuleApply(match_result.payload, self.midiTrack, self.voice_specs)
+                    
+                    i += match_result.consumed_chars
                     applied = True
-                    break # If a rule is applied, break the loop to check the next character
+                    break 
             
             if not applied:
-                i += 1 # If no rule is applied, move to the next character to avoid infinite loop (security measure for the default case)
+                i += 1 
 
         return self.midiTrack
