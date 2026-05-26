@@ -176,10 +176,10 @@ class GUI:
         self.text_area.bind("<KeyRelease>", self._handle_text_change)
     
     def _create_volume_slider(self):
-        frame = tk.Frame(self.left_frame)
+        frame = tk.Frame(self.bottom_buttons_frame)
         frame.pack(pady=10)
 
-        tk.Label(frame, text="Volume:").pack(side=tk.LEFT, padx=5)
+        tk.Label(frame, text="Volume Global:").pack(side=tk.LEFT, padx=5)
 
         self.volume_scale = tk.Scale(
             frame,
