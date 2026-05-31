@@ -3,20 +3,16 @@ from collections import defaultdict
 from dataclasses import dataclass
 from typing import Any
 
-from mido import Message, MidiTrack, MetaMessage, bpm2tempo
+from mido import MidiTrack
 import mido
 
 from src.DataClasses.VoiceSpecs import VoiceSpecs
-from src.DataClasses.ProjectConfigs import MappingConstants, InitialInstruments, RulesConstants, VoiceConstants
-from src.Utils.MIDITable import Instruments, Notes
+from src.DataClasses.ProjectConfigs import MappingConstants, RulesConstants
+from src.Utils.MIDITable import Notes
 
 
-class MusicState:
+class MusicBPMState:
     current_bpm = MappingConstants.INITIAL_BPM
-
-    @classmethod
-    def reset(cls):
-        cls.current_bpm = MappingConstants.INITIAL_BPM
     
     @classmethod
     def increase_bpm(cls):
@@ -25,10 +21,6 @@ class MusicState:
     @classmethod
     def decrease_bpm(cls):
         cls.current_bpm = max(MappingConstants.MINIMUM_BPM, cls.current_bpm - MappingConstants.BPM_STEP) # BPM should not go below MINIMUM_BPM
-    
-    @classmethod
-    def get_current_bpm(cls):
-        return cls.current_bpm
 
 
 @dataclass
@@ -113,11 +105,11 @@ class BPMControlRule(Mapping):
     
     def RuleApply(self, payload: Any, midiTrack: MidiTrack, _voice_specs: VoiceSpecs):
         if payload == '>':
-            MusicState.increase_bpm()
+            MusicBPMState.increase_bpm()
         else:
-            MusicState.decrease_bpm()
+            MusicBPMState.decrease_bpm()
 
-        new_tempo = mido.bpm2tempo(MusicState.current_bpm)
+        new_tempo = mido.bpm2tempo(MusicBPMState.current_bpm)
         tempo_message = mido.MetaMessage('set_tempo', tempo=new_tempo, time=0)
         midiTrack.append(tempo_message)
 

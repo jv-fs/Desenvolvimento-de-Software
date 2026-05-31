@@ -3,7 +3,7 @@ from pathlib import Path
 
 from src.Components.Voice import Voice
 from src.DataClasses.VoiceSpecs import VoiceSpecs
-from mido import MidiFile, MidiTrack, Message
+from mido import MidiFile
 
 class MIDIWriter:
     def __init__(self, mapping, text_operator):

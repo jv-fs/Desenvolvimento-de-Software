@@ -1,5 +1,3 @@
-import tkinter as tk
-from tkinter import filedialog
 from src.Utils.Exporter import ExportMidiFile
 
 ERROR_DISPLAY_DURATION = 3000
