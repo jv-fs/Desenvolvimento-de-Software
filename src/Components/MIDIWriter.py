@@ -13,26 +13,24 @@ class MIDIWriter:
         self.voices = []
         self.temp_midi_path = None
 
-        
-    
     def _reset_midi_file(self):
         self.midi_file = MidiFile()
     
     def _reset_voices(self):
         self.voices = []
     
-    def _create_voice(self, text: str, instrument: int, voice_index: int):
-        voice_specs = VoiceSpecs(instrument, voice_index)
+    def _create_voice(self, text: str, voice_index: int):
+        voice_specs = VoiceSpecs(voice_index) 
         voice = Voice(text, voice_specs)
         self.voices.append(voice)
     
     def create_voices(self):
         text = self.text_operator.getText()
         if text is not None:
-            self._reset_voices()  # Clear existing voices before creating new ones
+            self._reset_voices()
             for i, line in enumerate(text.splitlines()):
-                if line.strip():  # Only create a voice for non-empty lines
-                    self._create_voice(line, instrument=1, voice_index=i)
+                if line.strip(): 
+                    self._create_voice(line, voice_index=i)
     
     def get_voice_from_index(self, index: int):
         if index is not None and index < len(self.voices):
@@ -43,7 +41,7 @@ class MIDIWriter:
         self._reset_midi_file()  # Clear existing tracks before appending new ones
         for voice in self.voices:
             track = voice.generate_and_get_track()
-            self.midi_file.tracks.append(track) # CHECAR LIMITAÇÃO DE TRACKS DO MIDI
+            self.midi_file.tracks.append(track)
 
     def get_midi_file(self):
         return self.midi_file 
@@ -55,7 +53,6 @@ class MIDIWriter:
 
         self.midi_file.save(str(temp_path))
         return temp_path
-        
     
     def cleanup(self):
         if self.temp_midi_path:

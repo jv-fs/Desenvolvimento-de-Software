@@ -64,21 +64,19 @@ class NoteRule(Mapping):
     def RuleCheck(self, text: str, index: int) -> RuleMatch:
         return RuleMatch(is_match=True, consumed_chars=1, payload=text[index])
 
-    def RuleApply(self, payload: Any, midiTrack: MidiTrack, voice_specs: VoiceSpecs): # Colocar um try seria legal talvez?
+    def RuleApply(self, payload: Any, midiTrack: MidiTrack, voice_specs: VoiceSpecs):
         note = Notes.getNoteFromName(payload, voice_specs.getOctave())
 
-        volume_msg = mido.Message(
-            'control_change',
+        instrument_msg = mido.Message(
+            'program_change',
             channel=voice_specs.getVoiceIdentifier(),
-            control=7,
-            value=voice_specs.getVolume()
+            program=voice_specs.getInstrument()
         )
 
         note_on = mido.Message('note_on', note=note, velocity=64, time=0, channel=voice_specs.getVoiceIdentifier())
         note_off = mido.Message('note_off', note=note, velocity=64, time=MappingConstants.TICKS_PER_BEAT, channel=voice_specs.getVoiceIdentifier())
 
-    
-        midiTrack.append(volume_msg)
+        midiTrack.append(instrument_msg)
         midiTrack.append(note_on)
         midiTrack.append(note_off)
 

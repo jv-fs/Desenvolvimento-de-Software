@@ -1,14 +1,15 @@
-from src.DataClasses.ProjectConfigs import VoiceConstants
+from src.DataClasses.ProjectConfigs import VoiceConstants, InitialInstruments
 
 class VoiceSpecs():
-    def __init__(self, instrument: int, channel: int):
-        self.instrument = instrument # The MIDI instrument number (0-127)
-        self.voice_identifier = channel # The voice identifier, used to determine the channel and other specs based on the voice index
+    def __init__(self, voice_identifier: int):
+        self.voice_identifier = voice_identifier # The voice identifier, used to determine the channel and other specs based on the voice index
         self.volume = None # Just showing that this spec exists. The initial volume will be generated based on the voice index
         self.octave = None # Just showing that this spec exists. The initial octave will be generated based on the voice index
+        self.instrument = None # Just showing that this spec exists. The initial instrument will be generated based on the voice index or set by the user
 
         self._generateCorrectVolume()
         self._generateCorrectOctave()
+        self._generateDefaultInstrument()
     
     def _generateCorrectVolume(self):
         self.volume = VoiceConstants.MAXIMUM_VOLUME - (self.voice_identifier * VoiceConstants.VOLUME_STEP)
@@ -19,7 +20,7 @@ class VoiceSpecs():
         self.octave = VoiceConstants.BASE_OCTAVE - (self.voice_identifier % 4) # This will generate octaves in a cycle of 4 (6, 5, 4, 3, 6, 5, 4, 3, ...)
     
     def _generateDefaultInstrument(self): # Checar
-        self.octave = VoiceConstants.BASE_OCTAVE - (self.voice_identifier % 4)
+        self.instrument = InitialInstruments.instruments[self.voice_identifier % 4]
 
     def getInstrument(self):
         return self.instrument

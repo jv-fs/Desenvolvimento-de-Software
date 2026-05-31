@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import filedialog, ttk
 from src.Interface.Modules.Buttons import Buttons
 from src.Interface.Modules.GIFPlayer import GIFPlayer
+from src.Utils.MIDITable import Instruments
 
 ERROR_DISPLAY_DURATION = 3000  # Duration to display error messages in milliseconds
 
@@ -18,8 +19,6 @@ class GUI:
         
         self.root = tk.Tk()
         self.root.title("MIDI Converter")
-
-        self.instruments = self._create_instrument_map()
 
         self._build_layout()
         self._create_binds()
@@ -66,7 +65,7 @@ class GUI:
         self.player_buttons.create_restart_button()
         self.player_buttons.create_loop_button()
 
-    def _create_binds(self):
+    def _create_binds(self): # Determinates the reactions to button clicks by binding custom events to the root window and triggering them in the button command callbacks
         self.root.bind("<<play>>", lambda e: self._react_to_play_button_click())
         self.root.bind("<<stop>>", lambda e: self._react_to_stop_button_click())
         self.root.bind("<<restart>>", lambda e: self._react_to_restart_button_click())
@@ -74,6 +73,10 @@ class GUI:
         self.root.bind("<<file_open>>", lambda e: self._react_to_file_open_button_click())
         self.root.bind("<<compile>>", lambda e: self._react_to_compile_button_click())
         self.root.bind("<<save_file>>", lambda e: self._react_to_save_file_button_click())
+    
+    ##############################################
+    #            Bind Reactions:
+    ##############################################
 
     def _react_to_play_button_click(self):
 
@@ -122,6 +125,10 @@ class GUI:
         
         self._handle_save_midi()
 
+    ##############################################
+    #            Updater:
+    ##############################################
+
     def _update_interface(self):
         is_playing = self.actions_controller.trigger_get_is_playing()
         self.player_buttons.update_play_button(is_playing)
@@ -136,7 +143,6 @@ class GUI:
             self.gif_player.stop()
 
         self.root.after(100, self._update_interface)
-
 
     def _create_error_label(self):
         self.error_label = tk.Label(self.root, text="", fg="red", font=("Arial", 10, "bold"))
@@ -158,13 +164,23 @@ class GUI:
         frame = tk.Frame(self.left_frame)
         frame.pack(pady=10)
 
-        tk.Label(frame, text="Instrumento:").pack(side=tk.LEFT, padx=5)
+        tk.Label(frame, text="Instrumento (0-127):").pack(side=tk.LEFT, padx=5)
 
-        options = list(self.instruments.keys())
-        self.instrument_combobox = ttk.Combobox(frame, values=options, state="readonly", width=20)
-        self.instrument_combobox.pack(side=tk.LEFT, padx=5)
+        self.instrument_number_var = tk.StringVar()
+        self.instrument_number_var.trace_add("write", self._update_instrument_label)
 
-        self.instrument_combobox.bind("<<ComboboxSelected>>", self._handle_instrument_change)
+        self.instrument_spinbox = ttk.Spinbox(
+            frame, 
+            from_=0, 
+            to=127, 
+            width=5, 
+            textvariable=self.instrument_number_var
+        )
+        self.instrument_spinbox.pack(side=tk.LEFT, padx=5)
+
+        # Dynamical instrument name label
+        self.instrument_name_label = tk.Label(frame, text="---")
+        self.instrument_name_label.pack(side=tk.LEFT, padx=5)
 
         self._sync_instrument_with_voice()
 
@@ -209,26 +225,66 @@ class GUI:
 
         self.actions_controller.trigger_set_text(self.text_area.get("1.0", tk.END))
         self._update_voices_number_from_board()
+    
+    def _handle_voice_change(self, event=None):
+        self.selected_voice_index = self.voice_combobox.current()
+        self._sync_instrument_with_voice()
+    
+    def _handle_file_open(self):
+        path = filedialog.askopenfilename(parent=self.root)
 
-    def _get_instrument_name_from_value(self, instrument_value):
-        for name, value in self.instruments.items():
-            if value == instrument_value:
-                return name
+        if not path:
+            return
 
-        return None
+        self.actions_controller.trigger_load_data(path)
 
-    def _create_instrument_map(self): 
-        return {
-            "Piano": 0,
-            "Chromatic Percussion": 1,
-            "Harpsichord": 6,
-            "Acoustic Guitar": 24,
-            "Bass": 33,
-            "Strings": 48,
-            "Trumpet": 56,
-            "Flute": 73,
-            "Harmonica": 72
-        }
+        error = self.actions_controller.trigger_has_error()
+
+        if error:
+            self._show_error(error)
+            return
+
+        self._load_text_to_area()
+        self._update_voices_number_from_board()
+
+        self.requires_compile = True
+        self._refresh_error_label()
+
+
+    def _handle_compile(self):
+        self.actions_controller.trigger_set_text(self.text_area.get("1.0", tk.END))
+        
+        self.actions_controller.trigger_prepare_voices()
+
+        memory = getattr(self, 'user_selected_instruments', {})
+        for v_index, instr_num in memory.items():
+            self.actions_controller.trigger_set_voice_instrument(v_index, instr_num)
+
+        self.actions_controller.trigger_finish_compile()
+
+        self._sync_instrument_with_voice()
+        self.requires_compile = False
+        self._refresh_error_label()
+
+    def _handle_save_midi(self):
+        
+        path = filedialog.asksaveasfilename(
+        parent=self.root,
+        defaultextension=".mid",
+        filetypes=[("MIDI files", "*.mid")]
+        )
+
+        if not path:
+            return
+
+        self.actions_controller.trigger_save_file(path)
+
+        self.requires_compile = False
+        self._refresh_error_label()
+    
+    ##############################################
+    #              Labels and text area:
+    ##############################################
 
     def _show_error(self, message):
         self.transient_error_message = message
@@ -259,6 +315,33 @@ class GUI:
         self.text_area.delete("1.0", tk.END) # Clear existing content before inserting new text
         self.text_area.insert("1.0", content)
     
+    def _update_instrument_label(self, *args):
+        entry = self.instrument_number_var.get()
+        
+        try:
+            number = int(entry)
+
+            if 0 <= number <= 127:
+                name = Instruments.getInstrumentFromNumber(number)
+                self.instrument_name_label.config(text=name)
+                
+                if self.selected_voice_index is not None and not getattr(self, '_is_syncing_ui', False):
+                    
+                    if not hasattr(self, 'user_selected_instruments'):
+                        self.user_selected_instruments = {}
+                    self.user_selected_instruments[self.selected_voice_index] = number
+                    
+                    self.actions_controller.trigger_set_voice_instrument(self.selected_voice_index, number)
+                    
+            else:
+                self.instrument_name_label.config(text="Fora do limite")
+                
+        except ValueError:
+            self.instrument_name_label.config(text="Inválido")
+    
+    ##############################################
+    #            Voices and Instruments:
+    ##############################################
 
     def _update_voices_number_from_board(self):
         content = self.text_area.get("1.0", tk.END)
@@ -272,7 +355,7 @@ class GUI:
    
         self._refresh_voice_selector()
 
-    def _refresh_voice_selector(self): # VERIFICAR
+    def _refresh_voice_selector(self):
         if self.voices_number == 0:
             self.voice_combobox.config(values=[])
             self.voice_combobox.config(state="disabled")
@@ -283,76 +366,32 @@ class GUI:
             options = [str(i + 1) for i in range(self.voices_number)]
             self.voice_combobox.config(values=options)
     
-    def _handle_voice_change(self, event=None):
-        self.selected_voice_index = self.voice_combobox.current()
-        self._sync_instrument_with_voice()
-    
     def _sync_instrument_with_voice(self):
-        voice = self.actions_controller.trigger_get_current_voice(self.selected_voice_index)
+        self._is_syncing_ui = True
 
-        if voice:
-            instrument_value = voice.getInitialInstrument()
-
-            instrument_name = self._get_instrument_name_from_value(instrument_value)
-
-            if instrument_name:
-                self.instrument_combobox.set(instrument_name)
+        memoria = getattr(self, 'user_selected_instruments', {})
+        
+        if self.selected_voice_index is not None:
+            
+            if self.selected_voice_index in memoria:
+                instrument_value = memoria[self.selected_voice_index]
+                self.instrument_number_var.set(str(instrument_value))
+                
             else:
-                self.instrument_combobox.set("Instrumento Desconhecido")
+                voice = self.actions_controller.trigger_get_current_voice(self.selected_voice_index)
+                
+                if voice:
+                    instrument_value = voice.voice_specs.getInstrument()
+                    self.instrument_number_var.set(str(instrument_value))
+                else:
+                    from src.DataClasses.ProjectConfigs import InitialInstruments
+                    default_instrument = InitialInstruments.instruments[self.selected_voice_index % 4]
+                    self.instrument_number_var.set(str(default_instrument))
+                    
         else:
-            self.instrument_combobox.set("")
-        
-    def _handle_instrument_change(self, event=None):
-        selected_instrument = self.instrument_combobox.get()
-        if selected_instrument in self.instruments:
-            instrument_value = self.instruments[selected_instrument]
-            voice = self.actions_controller.trigger_get_current_voice(self.selected_voice_index)
-            if voice:
-                voice.setInitialInstrument(instrument_value) # <--- Verificar se isso fere algo
-    
-    def _handle_file_open(self):
-        path = filedialog.askopenfilename(parent=self.root)
+            self.instrument_number_var.set("")
 
-        if not path:
-            return
-
-        self.actions_controller.trigger_load_data(path)
-
-        error = self.actions_controller.trigger_has_error()
-
-        if error:
-            self._show_error(error)
-            return
-
-        self._load_text_to_area()
-        self._update_voices_number_from_board()
-
-        self.requires_compile = True
-        self._refresh_error_label()
-
-
-    def _handle_compile(self):
-        self.actions_controller.trigger_set_text(self.text_area.get("1.0", tk.END))
-        self.actions_controller.trigger_compile()
-
-        self.requires_compile = False
-        self._refresh_error_label()
-
-    def _handle_save_midi(self):
-        
-        path = filedialog.asksaveasfilename(
-        parent=self.root,
-        defaultextension=".mid",
-        filetypes=[("MIDI files", "*.mid")]
-        )
-
-        if not path:
-            return
-
-        self.actions_controller.trigger_save_file(path)
-
-        self.requires_compile = False
-        self._refresh_error_label()
+        self._is_syncing_ui = False
 
     ##############################################
     # Public methods to interact with the GUI:

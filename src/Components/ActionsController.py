@@ -2,7 +2,6 @@ from src.Utils.Exporter import ExportMidiFile
 
 ERROR_DISPLAY_DURATION = 3000
 
-
 class ActionsController:
     def __init__(self, midi_player, text_operator, midi_writer):
         self.midi_player = midi_player
@@ -36,12 +35,13 @@ class ActionsController:
     def trigger_set_text(self, text):
         self.text_operator.setText(text)
     
-    def trigger_compile(self):
+    def trigger_prepare_voices(self):
         self.midi_writer.create_voices()
+
+    def trigger_finish_compile(self):
         self.midi_writer.append_tracks_to_midi_file()
         temp_midi_path = self.midi_writer.create_temp_midi_file()
         self.midi_player.set_midi_temp(temp_midi_path)
-
         self.midi_writer.cleanup()
 
     def trigger_get_is_playing(self):
@@ -58,5 +58,10 @@ class ActionsController:
 
     def trigger_set_volume(self, volume: float):
         self.midi_player.set_volume(volume)
+
+    def trigger_set_voice_instrument(self, voice_index: int, instrument: int):
+        voice = self.midi_writer.get_voice_from_index(voice_index)
+        if voice is not None and 0 <= instrument <= 127:
+            voice.voice_specs.setInstrument(instrument)
     
     

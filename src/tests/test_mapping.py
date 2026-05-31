@@ -2,7 +2,6 @@ import pytest
 from unittest.mock import MagicMock
 import mido
 
-# Importações do seu projeto
 from src.Components.Mapping import initialPausesRule
 from src.DataClasses.VoiceSpecs import VoiceSpecs
 from src.DataClasses.ProjectConfigs import MappingConstants
