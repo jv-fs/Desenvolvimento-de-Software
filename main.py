@@ -1,12 +1,10 @@
-from abc import ABC
-
 from src.Components.MIDIPlayer import MIDIPlayer
 from src.Hooks.TextOperator import TextOperator
 from src.Components.MIDIWriter import MIDIWriter
 from src.Interface.GUI import GUI
 from src.Components.ActionsController import ActionsController
 
-class main(ABC):
+class main():
     
     @staticmethod
     def run():
