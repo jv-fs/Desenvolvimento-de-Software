@@ -15,6 +15,7 @@ class GUI:
         self.voices_number = 0
 
         self.requires_compile = False
+        self.requires_instrument_update = False
         self.transient_error_message = ""
         
         self.root = tk.Tk()
@@ -272,6 +273,7 @@ class GUI:
 
         self._sync_instrument_with_voice()
         self.requires_compile = False
+        self.requires_instrument_update = False
         self._refresh_error_label()
 
     def _handle_save_midi(self):
@@ -321,6 +323,9 @@ class GUI:
         if self.requires_compile:
             messages.append("Compile novamente antes de tocar.")
 
+        if self.requires_instrument_update:
+            messages.append("Compile novamente para atualizar instrumento")
+
         if self.transient_error_message:
             messages.append(self.transient_error_message)
 
@@ -352,6 +357,8 @@ class GUI:
                     self.user_selected_instruments[self.selected_voice_index] = number
                     
                     self.actions_controller.trigger_set_voice_instrument(self.selected_voice_index, number)
+                    self.requires_instrument_update = True
+                    self._refresh_error_label()
                     
             else:
                 self.instrument_name_label.config(text="Fora do limite")
