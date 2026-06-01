@@ -53,6 +53,14 @@ class ActionsController:
     def trigger_save_file(self, destination_path):
         ExportMidiFile.export(destination_path, self.midi_player.temp_midi_path)
 
+    def trigger_save_text_file(self, destination_path):
+        text_content = self.text_operator.getText()
+        if isinstance(text_content, list):
+            text_content = "\n".join(text_content)
+
+        with open(destination_path, "w", encoding="utf-8") as file:
+            file.write(text_content if text_content is not None else "")
+
     def trigger_set_volume(self, volume: float):
         self.midi_player.set_volume(volume)
 

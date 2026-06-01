@@ -55,6 +55,7 @@ class GUI:
         self._create_text_area()
        
         self.side_buttons.create_file_button()
+        self.side_buttons.create_save_text_button()
         self.side_buttons.create_save_button()
 
         self._create_volume_slider()
@@ -71,6 +72,7 @@ class GUI:
         self.root.bind("<<restart>>", lambda e: self._react_to_restart_button_click())
         self.root.bind("<<loop>>", lambda e: self._react_to_loop_button_click())
         self.root.bind("<<file_open>>", lambda e: self._react_to_file_open_button_click())
+        self.root.bind("<<save_text_file>>", lambda e: self._react_to_save_text_file_button_click())
         self.root.bind("<<compile>>", lambda e: self._react_to_compile_button_click())
         self.root.bind("<<save_file>>", lambda e: self._react_to_save_file_button_click())
     
@@ -114,6 +116,12 @@ class GUI:
     def _react_to_compile_button_click(self):
         self.actions_controller.trigger_stop()
         self._handle_compile()
+
+    def _react_to_save_text_file_button_click(self):
+        if not self._has_text_content():
+            return
+
+        self._handle_save_text_file()
 
     def _react_to_save_file_button_click(self):
         if self.requires_compile:
@@ -281,6 +289,18 @@ class GUI:
 
         self.requires_compile = False
         self._refresh_error_label()
+
+    def _handle_save_text_file(self):
+        path = filedialog.asksaveasfilename(
+            parent=self.root,
+            defaultextension=".txt",
+            filetypes=[("Text files", "*.txt")]
+        )
+
+        if not path:
+            return
+
+        self.actions_controller.trigger_save_text_file(path)
     
     ##############################################
     #              Labels and text area:

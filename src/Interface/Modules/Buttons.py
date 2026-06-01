@@ -38,6 +38,9 @@ class Buttons:
     def create_file_button(self):
         self._create_button("Abrir Arquivo de Texto", "<<file_open>>", bg="white", fg="black")
 
+    def create_save_text_button(self):
+        self._create_button("Salvar Arquivo de Texto", "<<save_text_file>>", bg="white", fg="black")
+
     def create_compile_button(self):
         self.compile_button = self._create_button("Compilar", "<<compile>>", bg="white", fg="black")
 
