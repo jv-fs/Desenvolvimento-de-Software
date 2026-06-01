@@ -53,7 +53,7 @@ class ActionsController:
     def trigger_save_file(self, destination_path):
         ExportMidiFile.export(destination_path, self.midi_player.temp_midi_path)
 
-    def get_temp_midi_temp(self):
+    def trigger_get_temp_midi_path(self):
         return self.midi_player.temp_midi_path
 
     def trigger_set_volume(self, volume: float):
