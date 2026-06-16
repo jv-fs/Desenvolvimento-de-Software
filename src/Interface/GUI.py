@@ -91,11 +91,11 @@ class GUI:
             return
 
         self.gif_player.start()
-        self.actions_controller.trigger_play()
+        self.actions_controller.playback.play()
 
     def _react_to_stop_button_click(self):
-        self.actions_controller.trigger_stop()
-    
+        self.actions_controller.playback.stop()
+
     def _react_to_restart_button_click(self):
 
         if self.requires_compile:
@@ -106,16 +106,16 @@ class GUI:
             return
 
         self.gif_player.start()
-        self.actions_controller.trigger_restart()
+        self.actions_controller.playback.restart()
     
     def _react_to_loop_button_click(self):
-        self.actions_controller.trigger_loop()
+        self.actions_controller.playback.toggle_loop()
     
     def _react_to_file_open_button_click(self):
         self._handle_file_open()
         
     def _react_to_compile_button_click(self):
-        self.actions_controller.trigger_stop()
+        self.actions_controller.playback.stop() 
         self._handle_compile()
 
     def _react_to_save_text_file_button_click(self):
@@ -139,10 +139,10 @@ class GUI:
     ##############################################
 
     def _update_interface(self):
-        is_playing = self.actions_controller.trigger_get_is_playing()
+        is_playing = self.actions_controller.playback.is_playing()
         self.player_buttons.update_play_button(is_playing)
 
-        is_loop_enabled = self.actions_controller.trigger_get_is_loop_enabled()
+        is_loop_enabled = self.actions_controller.playback.is_loop_enabled()
         self.player_buttons.update_loop_button(is_loop_enabled)
 
         self.player_buttons.update_compile_button(self.requires_compile)
@@ -225,14 +225,14 @@ class GUI:
     def _handle_volume_change(self, value):
         volume_float = float(value)
         
-        self.actions_controller.trigger_set_volume(volume_float)
+        self.actions_controller.playback.set_volume(volume_float)
     
     def _handle_text_change(self, event=None):
 
         self.requires_compile = True
         self._refresh_error_label()
 
-        self.actions_controller.trigger_set_text(self.text_area.get("1.0", tk.END))
+        self.actions_controller.text.set_text(self.text_area.get("1.0", tk.END))
         self._update_voices_number_from_board()
     
     def _handle_voice_change(self, event=None):
@@ -245,9 +245,9 @@ class GUI:
         if not path:
             return
 
-        self.actions_controller.trigger_load_data(path)
+        self.actions_controller.text.load_data(path)
 
-        error = self.actions_controller.trigger_has_error()
+        error = self.actions_controller.text.has_error()
 
         if error:
             self._show_error(error)
@@ -261,15 +261,15 @@ class GUI:
 
 
     def _handle_compile(self):
-        self.actions_controller.trigger_set_text(self.text_area.get("1.0", tk.END))
-        
-        self.actions_controller.trigger_prepare_voices()
+        self.actions_controller.text.set_text(self.text_area.get("1.0", tk.END))
+
+        self.actions_controller.compilation.prepare_voices()
 
         memory = getattr(self, 'user_selected_instruments', {})
         for v_index, instr_num in memory.items():
-            self.actions_controller.trigger_set_voice_instrument(v_index, instr_num)
+            self.actions_controller.instrument.set_voice_instrument(v_index, instr_num)
 
-        self.actions_controller.trigger_finish_compile()
+        self.actions_controller.compilation.finish_compile()
 
         self._sync_instrument_with_voice()
         self.requires_compile = False
@@ -287,7 +287,7 @@ class GUI:
         if not path:
             return
 
-        self.actions_controller.trigger_save_file(path)
+        self.actions_controller.export.save_midi(path)
 
         self.requires_compile = False
         self._refresh_error_label()
@@ -302,7 +302,7 @@ class GUI:
         if not path:
             return
 
-        self.actions_controller.trigger_save_text_file(path)
+        self.actions_controller.export.save_text(path)
     
     ##############################################
     #              Labels and text area:
@@ -335,7 +335,7 @@ class GUI:
         return bool(self.text_area.get("1.0", tk.END).strip())
 
     def _load_text_to_area(self):
-        content = "\n".join(self.actions_controller.trigger_get_text())
+        content = "\n".join(self.actions_controller.text.get_text())
 
         self.text_area.delete("1.0", tk.END) # Clear existing content before inserting new text
         self.text_area.insert("1.0", content)
@@ -356,7 +356,7 @@ class GUI:
                         self.user_selected_instruments = {}
                     self.user_selected_instruments[self.selected_voice_index] = number
                     
-                    self.actions_controller.trigger_set_voice_instrument(self.selected_voice_index, number)
+                    self.actions_controller.instrument.set_voice_instrument(self.selected_voice_index, number)
                     self.requires_instrument_update = True
                     self._refresh_error_label()
                     
@@ -405,7 +405,7 @@ class GUI:
                 self.instrument_number_var.set(str(instrument_value))
                 
             else:
-                voice = self.actions_controller.trigger_get_current_voice(self.selected_voice_index)
+                voice = self.actions_controller.instrument.get_current_voice(self.selected_voice_index)
                 
                 if voice:
                     instrument_value = voice.voice_specs.getInstrument()
