@@ -206,9 +206,34 @@ class GUI:
     def _create_text_area(self):
         tk.Label(self.right_frame, text="Digite a codificação da sua música:").pack()
 
-        self.text_area = tk.Text(self.right_frame, height=10, width=40)
-        self.text_area.pack(pady=10)
+        self.text_container = tk.Frame(self.right_frame)
+        self.text_container.pack(pady=10)
+
+        text_font = ("Courier", 10)
+
+        self.line_numbers = tk.Text(
+            self.text_container, 
+            width=5, 
+            height=10, 
+            state="disabled", 
+            bg="#e1e1e1", 
+            fg="blue", 
+            font=text_font,
+            wrap=tk.NONE
+        )
+        self.line_numbers.pack(side=tk.LEFT, fill=tk.Y)
+
+        self.text_area = tk.Text(
+            self.text_container, 
+            height=10, 
+            width=40, 
+            font=text_font,
+            wrap=tk.NONE
+        )
+        self.text_area.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
         self.text_area.bind("<KeyRelease>", self._handle_text_change)
+        self.text_area.config(yscrollcommand=self._sync_scroll)
     
     def _create_volume_slider(self):
         frame = tk.Frame(self.bottom_buttons_frame)
@@ -244,6 +269,7 @@ class GUI:
 
         self.actions_controller.text.set_text(self.text_area.get("1.0", tk.END))
         self._update_voices_number_from_board()
+        self._update_line_numbers()
     
     def _handle_voice_change(self, event=None):
         self.selected_voice_index = self.voice_combobox.current()
@@ -349,9 +375,14 @@ class GUI:
 
         self.text_area.delete("1.0", tk.END) # Clear existing content before inserting new text
         self.text_area.insert("1.0", content)
+        self._update_line_numbers()
     
     def _update_instrument_label(self, *args):
         entry = self.instrument_number_var.get()
+
+        if not entry or entry.strip() == "":
+            self.instrument_name_label.config(text="---")
+            return
         
         try:
             number = int(entry)
@@ -375,6 +406,31 @@ class GUI:
                 
         except ValueError:
             self.instrument_name_label.config(text="Inválido")
+    
+    def _update_line_numbers(self):
+        self.line_numbers.config(state="normal")
+        self.line_numbers.delete("1.0", tk.END)
+
+        content = self.text_area.get("1.0", tk.END)
+        if content.endswith("\n"):
+            content = content[:-1]
+
+        lines = content.splitlines()
+        voice_counter = 1
+        numbers_list = []
+
+        for line in lines:
+            if line.strip():
+                numbers_list.append(f"V{voice_counter}")
+                voice_counter += 1
+            else:
+                numbers_list.append("")
+
+        self.line_numbers.insert("1.0", "\n".join(numbers_list))
+        self.line_numbers.config(state="disabled")
+
+    def _sync_scroll(self, *args):
+        self.line_numbers.yview_moveto(args[0])
     
     ##############################################
     #            Voices and Instruments:
@@ -409,6 +465,7 @@ class GUI:
         memoria = getattr(self, 'user_selected_instruments', {})
         
         if self.selected_voice_index is not None:
+            self.instrument_spinbox.config(state="normal")
             
             if self.selected_voice_index in memoria:
                 instrument_value = memoria[self.selected_voice_index]
@@ -427,6 +484,7 @@ class GUI:
                     
         else:
             self.instrument_number_var.set("")
+            self.instrument_spinbox.config(state="disabled")
 
         self._is_syncing_ui = False
 
