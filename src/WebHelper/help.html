@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual de Comandos</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --bg-main: #f8fafc;
+            --bg-card: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --code-bg: #f1f5f9;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid var(--border);
+        }
+
+        header h1 {
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 30px;
+        }
+
+        @media (min-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            .full-width {
+                grid-column: span 2;
+            }
+        }
+
+        .card {
+            background: var(--bg-card);
+            border-radius: 8px;
+            padding: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border: 1px solid var(--border);
+        }
+
+        .card h2 {
+            font-size: 1.3rem;
+            margin-top: 0;
+            margin-bottom: 20px;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .rule-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .rule-list li {
+            display: flex;
+            align-items: flex-start;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .rule-list li:last-child {
+            border-bottom: none;
+        }
+
+        .key {
+            background-color: var(--code-bg);
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            box-shadow: 0 2px 0 #cbd5e1;
+            color: #0f172a;
+            display: inline-block;
+            font-family: monospace;
+            font-size: 0.9rem;
+            font-weight: bold;
+            padding: 2px 8px;
+            margin-right: 15px;
+            min-width: 55px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .desc {
+            flex-grow: 1;
+            padding-top: 2px;
+        }
+
+        .instrument-container {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 10px;
+            background: var(--bg-main);
+        }
+
+        .instrument-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+            font-size: 0.9rem;
+        }
+
+        .instrument-item {
+            background: var(--bg-card);
+            padding: 6px 10px;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+            display: flex;
+            gap: 8px;
+        }
+
+        .instrument-id {
+            font-weight: bold;
+            color: var(--primary);
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Guia de Sintaxe Musical</h1>
+        <p>Aprenda a mapear caracteres de texto em comandos e notas musicais.</p>
+    </header>
+
+    <div class="grid">
+        <div class="card">
+            <h2>Notas & Pausas</h2>
+            <ul class="rule-list">
+                <li>
+                    <span class="key">A - H</span>
+                    <span class="desc"><strong>Tocar Nota:</strong> Executa a nota correspondente (A, B, C, D, E, F, G, H) ou a variação <strong>Mb</strong>.</span>
+                </li>
+                <li>
+                    <span class="key">[n]Nota</span>
+                    <span class="desc"><strong>Duração da Nota:</strong> Se houver um número imediatamente antes de uma nota (ex: <code>4C</code>), este modifica o tempo de sustentação/duração em que ela fica rodando.</span>
+                </li>
+                <li>
+                    <span class="key">a - h</span>
+                    <span class="desc"><strong>Silêncio (Pausa):</strong> Insere uma pausa correspondente à letra minúscula.</span>
+                </li>
+                <li>
+                    <span class="key">Default</span>
+                    <span class="desc">Se o caractere anterior for uma nota, repete a nota atual. Caso contrário, gera silêncio.</span>
+                </li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <h2>Modificadores & Dinâmica</h2>
+            <ul class="rule-list">
+                <li>
+                    <span class="key">Espaço</span>
+                    <span class="desc"><strong>Volume:</strong> Dobra o volume da reprodução atual (com limite máximo de 127).</span>
+                </li>
+                <li>
+                    <span class="key">? ou V</span>
+                    <span class="desc"><strong>Oitava:</strong> Aumenta ou diminui a oitava de forma cíclica, respeitando os limites do sistema.</span>
+                </li>
+                <li>
+                    <span class="key">&gt; ou &lt;</span>
+                    <span class="desc"><strong>Tempo (BPM):</strong> Acelera ou desacelera o andamento da música em 10 BPM.</span>
+                </li>
+            </ul>
+        </div>
+
+        <div class="card full-width">
+            <h2>Configurações Especiais</h2>
+            <ul class="rule-list">
+                <li>
+                    <span class="key">[ x ]</span>
+                    <span class="desc"><strong>Pular Beats:</strong> Define o número <code>x</code> de beats a serem ignorados/pulados no início. Esta regra pode ser inserida em qualquer parte do texto, inclusive no meio da composição.</span>
+                </li>
+                <li>
+                    <span class="key">Especiais</span>
+                    <span class="desc">Caracteres como <strong>Dígito Par</strong>, <code>~</code>, <code>!</code>, <code>;</code> e <code>,</code> alternam a reprodução para instrumentos específicos da lista abaixo.</span>
+                </li>
+            </ul>
+        </div>
+
+        <div class="card full-width">
+            <h2>Tabela de Instrumentos (Mapeamento de IDs)</h2>
+            <p style="color: var(--text-muted); margin-top: 0;">Use os comandos de alteração para alternar entre os timbres disponíveis abaixo:</p>
+            
+            <div class="instrument-container">
+                <div class="instrument-grid" id="instruments-target">
+                    </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const idToInstruments = {
+        0: "Acoustic Grand Piano", 1: "Bright Acoustic Piano", 2: "Electric Grand Piano", 3: "Honky-tonk Piano",
+        4: "Electric Piano 1", 5: "Electric Piano 2", 6: "Harpsichord", 7: "Clavi",
+        8: "Celesta", 9: "Glockenspiel", 10: "Music Box", 11: "Vibraphone",
+        12: "Marimba", 13: "Xylophone", 14: "Tubular Bells", 15: "Dulcimer",
+        16: "Drawbar Organ", 17: "Percussive Organ", 18: "Rock Organ", 19: "Church Organ",
+        20: "Reed Organ", 21: "Accordion", 22: "Harmonica", 23: "Tango Accordion",
+        24: "Acoustic Guitar (nylon)", 25: "Acoustic Guitar (steel)", 26: "Electric Guitar (jazz)", 27: "Electric Guitar (clean)",
+        28: "Electric Guitar (muted)", 29: "Overdriven Guitar", 30: "Distortion Guitar", 31: "Guitar harmonics",
+        32: "Acoustic Bass", 33: "Electric Bass (finger)", 34: "Electric Bass (pick)", 35: "Fretless Bass",
+        36: "Slap Bass 1", 37: "Slap Bass 2", 38: "Synth Bass 1", 39: "Synth Bass 2",
+        40: "Violin", 41: "Viola", 42: "Cello", 43: "Contrabass",
+        44: "Tremolo Strings", 45: "Pizzicato Strings", 46: "Orchestral Harp", 47: "Timpani",
+        48: "String Ensemble 1", 49: "String Ensemble 2", 50: "SynthStrings 1", 51: "SynthStrings 2",
+        52: "Choir Aahs", 53: "Voice Oohs", 54: "Synth Voice", 55: "Orchestra Hit",
+        56: "Trumpet", 57: "Trombone", 58: "Tuba", 59: "Muted Trumpet",
+        60: "French Horn", 61: "Brass Section", 62: "SynthBrass 1", 63: "SynthBrass 2",
+        64: "Soprano Sax", 65: "Alto Sax", 66: "Tenor Sax", 67: "Baritone Sax",
+        68: "Oboe", 69: "English Horn", 70: "Bassoon", 71: "Clarinet",
+        72: "Piccolo", 73: "Flute", 74: "Recorder", 75: "Pan Flute",
+        76: "Blown Bottle", 77: "Shakuhachi", 78: "Whistle", 79: "Ocarina",
+        80: "Lead 1 (square)", 81: "Lead 2 (sawtooth)", 82: "Lead 3 (calliope)", 83: "Lead 4 (chiff)",
+        84: "Lead 5 (charang)", 85: "Lead 6 (voice)", 86: "Lead 7 (fifths)", 87: "Lead 8 (bass + lead)",
+        88: "Pad 1 (new age)", 89: "Pad 2 (warm)", 90: "Pad 3 (polysynth)", 91: "Pad 4 (choir)",
+        92: "Pad 5 (bowed)", 93: "Pad 6 (metallic)", 94: "Pad 7 (halo)", 95: "Pad 8 (sweep)",
+        96: "FX 1 (rain)", 97: "FX 2 (soundtrack)", 98: "FX 3 (crystal)", 99: "FX 4 (atmosphere)",
+        100: "FX 5 (brightness)", 101: "FX 6 (goblins)", 102: "FX 7 (echoes)", 103: "FX 8 (sci-fi)",
+        104: "Sitar", 105: "Banjo", 106: "Shamisen", 107: "Koto",
+        108: "Kalimba", 109: "Bag pipe", 110: "Fiddle", 111: "Shanai",
+        112: "Tinkle Bell", 113: "Agogo", 114: "Steel Drums", 115: "Woodblock",
+        116: "Taiko Drum", 117: "Melodic Tom", 118: "Synth Drum", 119: "Reverse Cymbal",
+        120: "Guitar Fret Noise", 121: "Breath Noise", 122: "Seashore", 123: "Bird Tweet",
+        124: "Telephone Ring", 125: "Helicopter", 126: "Applause", 127: "Gunshot"
+    };
+
+    const target = document.getElementById('instruments-target');
+    Object.entries(idToInstruments).forEach(([id, name]) => {
+        const item = document.createElement('div');
+        item.className = 'instrument-item';
+        item.innerHTML = `<span class="instrument-id">${id.padStart(3, '0')}</span> <span>${name}</span>`;
+        target.appendChild(item);
+    });
+</script>
+
+</body>
+</html>

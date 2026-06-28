@@ -4,7 +4,11 @@ from src.Interface.Modules.Buttons import Buttons
 from src.Interface.Modules.GIFPlayer import GIFPlayer
 from src.Utils.MIDITable import Instruments
 
+import webbrowser
+import os
+
 ERROR_DISPLAY_DURATION = 3000  # Duration to display error messages in milliseconds
+HELPER_PATH = os.path.abspath(r'src\WebHelper\help.html')
 
 class GUI:
     def __init__(self, actions_controller):
@@ -58,6 +62,7 @@ class GUI:
         self.side_buttons.create_file_button()
         self.side_buttons.create_save_text_button()
         self.side_buttons.create_save_button()
+        self.side_buttons.create_help_button()
 
         self._create_volume_slider()
         
@@ -66,6 +71,7 @@ class GUI:
         self.player_buttons.create_stop_button()
         self.player_buttons.create_restart_button()
         self.player_buttons.create_loop_button()
+        
 
     def _create_binds(self): # Determinates the reactions to button clicks by binding custom events to the root window and triggering them in the button command callbacks
         self.root.bind("<<play>>", lambda e: self._react_to_play_button_click())
@@ -76,6 +82,7 @@ class GUI:
         self.root.bind("<<save_text_file>>", lambda e: self._react_to_save_text_file_button_click())
         self.root.bind("<<compile>>", lambda e: self._react_to_compile_button_click())
         self.root.bind("<<save_file>>", lambda e: self._react_to_save_file_button_click())
+        self.root.bind("<<help>>", lambda e: self._react_to_help_button_click())
     
     ##############################################
     #            Bind Reactions:
@@ -133,6 +140,9 @@ class GUI:
             return
         
         self._handle_save_midi()
+    
+    def _react_to_help_button_click(self):
+        webbrowser.open(f'file://{HELPER_PATH}')
 
     ##############################################
     #            Updater:
