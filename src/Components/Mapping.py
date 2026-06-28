@@ -63,23 +63,21 @@ class Mapping(ABC):
 class NoteRule(Mapping):
     def RuleCheck(self, text: str, index: int) -> RuleMatch:
         note_char = text[index]
-        if note_char in 'ABCDEFGH':
-            if index + 1 < len(text) and text[index + 1].isdigit():
-                number_val = int(text[index + 1])
-
-                return RuleMatch(
-                    is_match=True, 
-                    consumed_chars=2, 
-                    payload={'note': note_char, 'number': number_val}
-                )
-            else:
-                return RuleMatch(
-                    is_match=True, 
-                    consumed_chars=1, 
-                    payload={'note': note_char, 'number': None}
-                )
         
-        return RuleMatch(is_match=False)
+        if index + 1 < len(text) and text[index + 1].isdigit():
+            number_val = int(text[index + 1])
+
+            return RuleMatch(
+                is_match=True, 
+                consumed_chars=2, 
+                payload={'note': note_char, 'number': number_val}
+            )
+        
+        return RuleMatch(
+            is_match=True, 
+            consumed_chars=1, 
+            payload={'note': note_char, 'number': None}
+        )
 
     def RuleApply(self, payload: Any, midiTrack: MidiTrack, voice_specs: VoiceSpecs):
         note_name = payload['note']
@@ -91,18 +89,42 @@ class NoteRule(Mapping):
         multiplier = number_modifier if (number_modifier is not None and number_modifier > 0) else 1
         duration = MappingConstants.TICKS_PER_BEAT * multiplier
 
+        note_volume = voice_specs.getVolume()
+
         instrument_msg = mido.Message(
             'program_change',
             channel=voice_specs.getVoiceIdentifier(),
             program=voice_specs.getInstrument()
         )
 
-        note_on = mido.Message('note_on', note=note, velocity=64, time=0, channel=voice_specs.getVoiceIdentifier())
-        note_off = mido.Message('note_off', note=note, velocity=64, time=duration, channel=voice_specs.getVoiceIdentifier())
+        note_on = mido.Message(
+            'note_on', 
+            note=note, 
+            velocity=note_volume,
+            time=0, 
+            channel=voice_specs.getVoiceIdentifier()
+        )
+        
+        note_off = mido.Message(
+            'note_off', 
+            note=note, 
+            velocity=note_volume,
+            time=duration, 
+            channel=voice_specs.getVoiceIdentifier()
+        )
 
         midiTrack.append(instrument_msg)
         midiTrack.append(note_on)
         midiTrack.append(note_off)
+
+@Mapping.register(' ')
+class DoubleVolumeRule(Mapping):
+    def RuleCheck(self, text: str, index: int) -> RuleMatch:
+        return RuleMatch(is_match=True, consumed_chars=1)
+
+    def RuleApply(self, payload: Any, midiTrack: mido.MidiTrack, voice_specs: VoiceSpecs):
+        new_volume = voice_specs.getVolume() * 2
+        voice_specs.setVolume(new_volume)
 
 @Mapping.register('*')
 class FadeOutRule(Mapping):
@@ -135,6 +157,24 @@ class FadeOutRule(Mapping):
             channel=voice_specs.getVoiceIdentifier()
         )
         midiTrack.append(silence_msg)
+
+@Mapping.register('0', '2', '4', '6', '8')
+class EvenDigitRule(Mapping):
+    def RuleCheck(self, text: str, index: int) -> RuleMatch:
+        digit_val = int(text[index])
+
+        return RuleMatch(is_match=True, consumed_chars=1, payload=digit_val)
+
+    def RuleApply(self, payload: Any, midiTrack: mido.MidiTrack, voice_specs: VoiceSpecs):
+        digit_val = payload
+        current_instrument = voice_specs.getInstrument()
+
+        new_instrument = current_instrument + digit_val
+
+        if new_instrument > 127:
+            new_instrument = 127
+            
+        voice_specs.setInstrument(new_instrument)
 
 @Mapping.register('M')
 class EFlatRule(Mapping):

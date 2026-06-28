@@ -1,5 +1,6 @@
 class VoiceConstants:
     MAXIMUM_VOLUME = 100
+    ABSOLUTE_MAX_VOLUME = 127
     MINIMUM_VOLUME = 0
 
     VOLUME_STEP = 20
