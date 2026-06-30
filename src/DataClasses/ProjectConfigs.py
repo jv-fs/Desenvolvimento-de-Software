@@ -1,5 +1,6 @@
 class VoiceConstants:
     MAXIMUM_VOLUME = 100
+    ABSOLUTE_MAX_VOLUME = 127
     MINIMUM_VOLUME = 0
 
     VOLUME_STEP = 20
@@ -23,9 +24,9 @@ class MappingConstants:
 
 class RulesConstants:
     intrument_rules_characters = {
-        '!': 22, # Harmonica
-        ';': 15, # Tubular Bells
-        ',': 20, # Church Organ
+        '!': 21, # Harmonica
+        ';': 14, # Tubular Bells
+        ',': 19, # Church Organ
     }
 
 class InitialInstruments:

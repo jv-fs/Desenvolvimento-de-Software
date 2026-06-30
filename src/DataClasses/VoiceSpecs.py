@@ -7,11 +7,11 @@ class VoiceSpecs():
         self.octave = None # Just showing that this spec exists. The initial octave will be generated based on the voice index
         self.instrument = None # Just showing that this spec exists. The initial instrument will be generated based on the voice index or set by the user
 
-        self._generateCorrectVolume()
+        self._generateCorrectInitialVolume()
         self._generateCorrectOctave()
         self._generateDefaultInstrument()
     
-    def _generateCorrectVolume(self):
+    def _generateCorrectInitialVolume(self):
         self.volume = VoiceConstants.MAXIMUM_VOLUME - (self.voice_identifier * VoiceConstants.VOLUME_STEP)
         if self.volume < VoiceConstants.MINIMUM_VOLUME:
             self.volume = VoiceConstants.MINIMUM_VOLUME
@@ -35,13 +35,18 @@ class VoiceSpecs():
         return self.voice_identifier
 
     def setVolume(self, volume: int):
-        self.volume = volume
+        if volume > VoiceConstants.ABSOLUTE_MAX_VOLUME:
+            self.volume = VoiceConstants.ABSOLUTE_MAX_VOLUME
+        elif volume < VoiceConstants.MINIMUM_VOLUME:
+            self.volume = VoiceConstants.MINIMUM_VOLUME
+        else:
+            self.volume = volume
     
     def setOctave(self, octave: int):
         if octave < VoiceConstants.MINIMUM_OCTAVE:
-            octave = VoiceConstants.MINIMUM_OCTAVE
+            octave = VoiceConstants.BASE_OCTAVE
         elif octave > VoiceConstants.MAXIMUM_OCTAVE:
-            octave = VoiceConstants.MAXIMUM_OCTAVE
+            octave = VoiceConstants.BASE_OCTAVE
         
         self.octave = octave
     
