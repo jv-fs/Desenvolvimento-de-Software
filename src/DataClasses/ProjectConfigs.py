@@ -24,9 +24,9 @@ class MappingConstants:
 
 class RulesConstants:
     intrument_rules_characters = {
-        '!': 22, # Harmonica
-        ';': 15, # Tubular Bells
-        ',': 20, # Church Organ
+        '!': 21, # Harmonica
+        ';': 14, # Tubular Bells
+        ',': 19, # Church Organ
     }
 
 class InitialInstruments:

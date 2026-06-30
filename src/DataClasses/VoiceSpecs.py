@@ -44,9 +44,9 @@ class VoiceSpecs():
     
     def setOctave(self, octave: int):
         if octave < VoiceConstants.MINIMUM_OCTAVE:
-            octave = VoiceConstants.MINIMUM_OCTAVE
+            octave = VoiceConstants.BASE_OCTAVE
         elif octave > VoiceConstants.MAXIMUM_OCTAVE:
-            octave = VoiceConstants.MAXIMUM_OCTAVE
+            octave = VoiceConstants.BASE_OCTAVE
         
         self.octave = octave
     

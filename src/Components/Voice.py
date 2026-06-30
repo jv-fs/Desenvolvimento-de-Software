@@ -2,6 +2,7 @@ from mido import MidiTrack
 from src.Components.Mapping import Mapping
 from src.DataClasses.VoiceSpecs import VoiceSpecs
 
+
 class Voice:
     def __init__(self, text: str, voice_specs: VoiceSpecs):
         self.text = text

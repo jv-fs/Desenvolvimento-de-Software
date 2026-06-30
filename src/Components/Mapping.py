@@ -44,9 +44,8 @@ class Mapping(ABC):
             return subclass
         return wrapper
 
-    @abstractmethod
     def RuleCheck(self, text: str, index: int) -> RuleMatch:
-        pass
+        return RuleMatch(is_match=True, consumed_chars=1, payload=text[index])
 
     @abstractmethod
     def RuleApply(self, payload: Any, midiTrack: MidiTrack, voice_specs: VoiceSpecs):
@@ -119,9 +118,6 @@ class NoteRule(Mapping):
 
 @Mapping.register(' ')
 class DoubleVolumeRule(Mapping):
-    def RuleCheck(self, text: str, index: int) -> RuleMatch:
-        return RuleMatch(is_match=True, consumed_chars=1)
-
     def RuleApply(self, payload: Any, midiTrack: mido.MidiTrack, voice_specs: VoiceSpecs):
         new_volume = voice_specs.getVolume() * 2
         voice_specs.setVolume(new_volume)
@@ -179,7 +175,7 @@ class EvenDigitRule(Mapping):
 @Mapping.register('M')
 class EFlatRule(Mapping):
     def RuleCheck(self, text: str, index: int) -> RuleMatch:
-        if text[index + 1] == 'b':
+        if index + 1 < len(text) and text[index + 1] == 'b':
             return RuleMatch(is_match=True, consumed_chars=2, payload='Mb')
         else:
             return RuleMatch(is_match=False)
@@ -194,9 +190,6 @@ class EFlatRule(Mapping):
 
 @Mapping.register('>', '<')
 class BPMControlRule(Mapping):
-    def RuleCheck(self, text: str, index: int) -> RuleMatch:
-        return RuleMatch(is_match=True, consumed_chars=1, payload=text[index])
-    
     def RuleApply(self, payload: Any, midiTrack: MidiTrack, _voice_specs: VoiceSpecs):
         if payload == '>':
             MusicBPMState.increase_bpm()
@@ -209,9 +202,6 @@ class BPMControlRule(Mapping):
 
 @Mapping.register('!', ';', ',')
 class InstrumentChangeRule(Mapping):
-    def RuleCheck(self, text: str, index: int) -> RuleMatch:
-        return RuleMatch(is_match=True, consumed_chars=1, payload=text[index])
-    
     def RuleApply(self, payload: Any, midiTrack: MidiTrack, voice_specs: VoiceSpecs):
         instrument_value = RulesConstants.intrument_rules_characters.get(payload)
         program_change_message = mido.Message('program_change', program=instrument_value, time=0, channel=voice_specs.getVoiceIdentifier())
@@ -220,9 +210,6 @@ class InstrumentChangeRule(Mapping):
 
 @Mapping.register('V', '?')
 class OctaveControlRule(Mapping):
-    def RuleCheck(self, text: str, index: int) -> RuleMatch:
-        return RuleMatch(is_match=True, consumed_chars=1, payload=text[index])
-    
     def RuleApply(self, payload: Any, _midiTrack: MidiTrack, voice_specs: VoiceSpecs):
         # Respects the interval of octaves defined by MINIMUM_OCTAVE and MAXIMUM_OCTAVE 
         # If the new octave goes below the minimum, it should wrap around to the maximum.
@@ -237,9 +224,6 @@ class OctaveControlRule(Mapping):
 
 @Mapping.register('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h')
 class LowerCasePauseRule(Mapping):
-    def RuleCheck(self, _text: str, _index: int) -> RuleMatch:
-        return RuleMatch(is_match=True, consumed_chars=1)
-
     def RuleApply(self, _payload: Any, midiTrack: MidiTrack, voice_specs: VoiceSpecs):
         pause = mido.Message('note_off', note=0, velocity=0, time=MappingConstants.TICKS_PER_BEAT, channel=voice_specs.getVoiceIdentifier())
         midiTrack.append(pause)
