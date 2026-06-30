@@ -3,12 +3,11 @@ from collections import defaultdict
 from dataclasses import dataclass
 from typing import Any
 
-from mido import MidiTrack
 import mido
 
-from src.DataClasses.VoiceSpecs import VoiceSpecs
 from src.DataClasses.ProjectConfigs import MappingConstants, RulesConstants
 from src.Utils.MIDITable import Notes
+from src.DataClasses.VoiceSpecs import VoiceSpecs
 
 
 class MusicBPMState:
@@ -29,6 +28,11 @@ class RuleMatch:
     consumed_chars: int = 0
     payload: Any = None
 
+@dataclass
+class RuleExecutionContext:
+    payload: any
+    midiTrack: mido.MidiTrack
+    voice_specs: VoiceSpecs
 
 class Mapping(ABC):
     registry = defaultdict(list)
@@ -48,14 +52,14 @@ class Mapping(ABC):
         return RuleMatch(is_match=True, consumed_chars=1, payload=text[index])
 
     @abstractmethod
-    def RuleApply(self, payload: Any, midiTrack: MidiTrack, voice_specs: VoiceSpecs):
+    def RuleApply(self, context: RuleExecutionContext):
         pass
 
 ########################
 #        Rules:
 ########################
 
-# IMPORTANT: the rules below must be in priority order, meaning that if a character has more than one rule, the one with higher priority (lower in the code) will be applied first.
+# IMPORTANT: the rules below must be in priority order, meaning that if a character has more than one rule, the one with higher priority will be applied first.
 # If a rule is applied, the next rules will not be checked for that character, so the order of the rules is important to ensure the correct behavior of the mapping system.
 
 @Mapping.register('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H')
@@ -78,7 +82,11 @@ class NoteRule(Mapping):
             payload={'note': note_char, 'number': None}
         )
 
-    def RuleApply(self, payload: Any, midiTrack: MidiTrack, voice_specs: VoiceSpecs):
+    def RuleApply(self, context: RuleExecutionContext):
+        payload = context.payload
+        midiTrack = context.midiTrack
+        voice_specs = context.voice_specs
+
         note_name = payload['note']
         number_modifier = payload['number']
 
@@ -118,9 +126,9 @@ class NoteRule(Mapping):
 
 @Mapping.register(' ')
 class DoubleVolumeRule(Mapping):
-    def RuleApply(self, payload: Any, midiTrack: mido.MidiTrack, voice_specs: VoiceSpecs):
-        new_volume = voice_specs.getVolume() * 2
-        voice_specs.setVolume(new_volume)
+    def RuleApply(self, context: RuleExecutionContext):
+        new_volume = context.voice_specs.getVolume() * 2
+        context.voice_specs.setVolume(new_volume)
 
 @Mapping.register('*')
 class FadeOutRule(Mapping):
@@ -133,7 +141,7 @@ class FadeOutRule(Mapping):
         
         return RuleMatch(is_match=False)
 
-    def RuleApply(self, payload: Any, midiTrack: mido.MidiTrack, voice_specs: VoiceSpecs):
+    def RuleApply(self, context: RuleExecutionContext):
         tail_ticks = MappingConstants.TICKS_PER_BEAT * 2
         
         reverb_msg = mido.Message(
@@ -141,18 +149,18 @@ class FadeOutRule(Mapping):
             control=91, 
             value=127, 
             time=0, 
-            channel=voice_specs.getVoiceIdentifier()
+            channel=context.voice_specs.getVoiceIdentifier()
         )
-        midiTrack.append(reverb_msg)
+        context.midiTrack.append(reverb_msg)
         
         silence_msg = mido.Message(
             'control_change', 
             control=11, 
             value=0, 
             time=tail_ticks, 
-            channel=voice_specs.getVoiceIdentifier()
+            channel=context.voice_specs.getVoiceIdentifier()
         )
-        midiTrack.append(silence_msg)
+        context.midiTrack.append(silence_msg)
 
 @Mapping.register('0', '2', '4', '6', '8')
 class EvenDigitRule(Mapping):
@@ -161,16 +169,16 @@ class EvenDigitRule(Mapping):
 
         return RuleMatch(is_match=True, consumed_chars=1, payload=digit_val)
 
-    def RuleApply(self, payload: Any, midiTrack: mido.MidiTrack, voice_specs: VoiceSpecs):
-        digit_val = payload
-        current_instrument = voice_specs.getInstrument()
+    def RuleApply(self, context: RuleExecutionContext):
+        digit_val = context.payload
+        current_instrument = context.voice_specs.getInstrument()
 
         new_instrument = current_instrument + digit_val
 
         if new_instrument > 127:
             new_instrument = 127
             
-        voice_specs.setInstrument(new_instrument)
+        context.voice_specs.setInstrument(new_instrument)
 
 @Mapping.register('M')
 class EFlatRule(Mapping):
@@ -180,53 +188,53 @@ class EFlatRule(Mapping):
         else:
             return RuleMatch(is_match=False)
 
-    def RuleApply(self, payload: Any, midiTrack: MidiTrack, voice_specs: VoiceSpecs):
-        note = Notes.getNoteFromName(payload, voice_specs.getOctave())
-        note_on = mido.Message('note_on', note=note, velocity=64, time=0, channel=voice_specs.getVoiceIdentifier())
+    def RuleApply(self, context: RuleExecutionContext):
+        note = Notes.getNoteFromName(context.payload, context.voice_specs.getOctave())
+        note_on = mido.Message('note_on', note=note, velocity=64, time=0, channel=context.voice_specs.getVoiceIdentifier())
 
-        note_off = mido.Message('note_off', note=note, velocity=64, time=MappingConstants.TICKS_PER_BEAT, channel=voice_specs.getVoiceIdentifier())
-        midiTrack.append(note_on)
-        midiTrack.append(note_off)
+        note_off = mido.Message('note_off', note=note, velocity=64, time=MappingConstants.TICKS_PER_BEAT, channel=context.voice_specs.getVoiceIdentifier())
+        context.midiTrack.append(note_on)
+        context.midiTrack.append(note_off)
 
 @Mapping.register('>', '<')
 class BPMControlRule(Mapping):
-    def RuleApply(self, payload: Any, midiTrack: MidiTrack, _voice_specs: VoiceSpecs):
-        if payload == '>':
+    def RuleApply(self, context: RuleExecutionContext):
+        if context.payload == '>':
             MusicBPMState.increase_bpm()
         else:
             MusicBPMState.decrease_bpm()
 
         new_tempo = mido.bpm2tempo(MusicBPMState.current_bpm)
         tempo_message = mido.MetaMessage('set_tempo', tempo=new_tempo, time=0)
-        midiTrack.append(tempo_message)
+        context.midiTrack.append(tempo_message)
 
 @Mapping.register('!', ';', ',')
 class InstrumentChangeRule(Mapping):
-    def RuleApply(self, payload: Any, midiTrack: MidiTrack, voice_specs: VoiceSpecs):
-        instrument_value = RulesConstants.intrument_rules_characters.get(payload)
-        program_change_message = mido.Message('program_change', program=instrument_value, time=0, channel=voice_specs.getVoiceIdentifier())
-        midiTrack.append(program_change_message)
-        voice_specs.setInstrument(instrument_value) 
+    def RuleApply(self, context: RuleExecutionContext):
+        instrument_value = RulesConstants.intrument_rules_characters.get(context.payload)
+        program_change_message = mido.Message('program_change', program=instrument_value, time=0, channel=context.voice_specs.getVoiceIdentifier())
+        context.midiTrack.append(program_change_message)
+        context.voice_specs.setInstrument(instrument_value) 
 
 @Mapping.register('V', '?')
 class OctaveControlRule(Mapping):
-    def RuleApply(self, payload: Any, _midiTrack: MidiTrack, voice_specs: VoiceSpecs):
+    def RuleApply(self, context: RuleExecutionContext):
         # Respects the interval of octaves defined by MINIMUM_OCTAVE and MAXIMUM_OCTAVE 
         # If the new octave goes below the minimum, it should wrap around to the maximum.
-        current_octave = voice_specs.getOctave()
+        current_octave = context.voice_specs.getOctave()
         
-        if payload == 'V':
+        if context.payload == 'V':
             new_octave = current_octave - 1 
         else:
             new_octave = current_octave + 1
 
-        voice_specs.setOctave(new_octave)  # Exceptions for octave limits are handled inside the setOctave method of VoiceSpecs, which will ensure the octave stays within the defined range.
+        context.voice_specs.setOctave(new_octave)  # Exceptions for octave limits are handled inside the setOctave method of VoiceSpecs, which will ensure the octave stays within the defined range.
 
 @Mapping.register('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h')
 class LowerCasePauseRule(Mapping):
-    def RuleApply(self, _payload: Any, midiTrack: MidiTrack, voice_specs: VoiceSpecs):
-        pause = mido.Message('note_off', note=0, velocity=0, time=MappingConstants.TICKS_PER_BEAT, channel=voice_specs.getVoiceIdentifier())
-        midiTrack.append(pause)
+    def RuleApply(self, context: RuleExecutionContext):
+        pause = mido.Message('note_off', note=0, velocity=0, time=MappingConstants.TICKS_PER_BEAT, channel=context.voice_specs.getVoiceIdentifier())
+        context.midiTrack.append(pause)
 
 @Mapping.register('[')
 class initialPausesRule(Mapping):
@@ -243,10 +251,10 @@ class initialPausesRule(Mapping):
 
         return RuleMatch(is_match=False)
     
-    def RuleApply(self, payload: Any, midiTrack: MidiTrack, voice_specs: VoiceSpecs):
-        delay_ticks = payload * MappingConstants.TICKS_PER_BEAT
-        pause_message = mido.Message('note_off', note=0, velocity=0, time=delay_ticks, channel=voice_specs.getVoiceIdentifier())
-        midiTrack.append(pause_message)
+    def RuleApply(self, context: RuleExecutionContext):
+        delay_ticks = context.payload * MappingConstants.TICKS_PER_BEAT
+        pause_message = mido.Message('note_off', note=0, velocity=0, time=delay_ticks, channel=context.voice_specs.getVoiceIdentifier())
+        context.midiTrack.append(pause_message)
 
 @Mapping.register(is_default=True)
 class DefaultRule(Mapping):
@@ -263,16 +271,16 @@ class DefaultRule(Mapping):
         else:
             return RuleMatch(is_match=True, consumed_chars=1, payload=None)
 
-    def RuleApply(self, payload: Any, midiTrack: MidiTrack, voice_specs: VoiceSpecs):
-        if payload:
-            note = Notes.getNoteFromName(payload, voice_specs.getOctave())
+    def RuleApply(self, context: RuleExecutionContext):
+        if context.payload:
+            note = Notes.getNoteFromName(context.payload, context.voice_specs.getOctave())
 
-            note_on = mido.Message('note_on', note=note, velocity=64, time=0, channel=voice_specs.getVoiceIdentifier())
-            note_off = mido.Message('note_off', note=note, velocity=64, time=MappingConstants.TICKS_PER_BEAT, channel=voice_specs.getVoiceIdentifier())
+            note_on = mido.Message('note_on', note=note, velocity=64, time=0, channel=context.voice_specs.getVoiceIdentifier())
+            note_off = mido.Message('note_off', note=note, velocity=64, time=MappingConstants.TICKS_PER_BEAT, channel=context.voice_specs.getVoiceIdentifier())
 
-            midiTrack.append(note_on)
-            midiTrack.append(note_off)
-            
+            context.midiTrack.append(note_on)
+            context.midiTrack.append(note_off)
+
         else: # If there is no previous note, we can consider this character as a pause
-            pause = mido.Message('note_off', note=0, velocity=0, time=MappingConstants.TICKS_PER_BEAT, channel=voice_specs.getVoiceIdentifier())
-            midiTrack.append(pause)
+            pause = mido.Message('note_off', note=0, velocity=0, time=MappingConstants.TICKS_PER_BEAT, channel=context.voice_specs.getVoiceIdentifier())
+            context.midiTrack.append(pause)

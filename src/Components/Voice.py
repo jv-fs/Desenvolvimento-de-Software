@@ -1,7 +1,6 @@
 from mido import MidiTrack
-from src.Components.Mapping import Mapping
+from src.Components.Mapping import Mapping, RuleExecutionContext
 from src.DataClasses.VoiceSpecs import VoiceSpecs
-
 
 class Voice:
     def __init__(self, text: str, voice_specs: VoiceSpecs):
@@ -32,7 +31,7 @@ class Voice:
                 match_result = rule.RuleCheck(self.text, i)
                 
                 if match_result.is_match:
-                    rule.RuleApply(match_result.payload, self.midiTrack, self.voice_specs)
+                    rule.RuleApply(RuleExecutionContext(payload = match_result.payload, midiTrack = self.midiTrack, voice_specs = self.voice_specs))
                     
                     i += match_result.consumed_chars
                     applied = True

@@ -165,19 +165,19 @@
             <ul class="rule-list">
                 <li>
                     <span class="key">A - H</span>
-                    <span class="desc"><strong>Tocar Nota:</strong> Executa a nota correspondente (A, B, C, D, E, F, G, H) ou a variação <strong>Mb</strong>.</span>
+                    <span class="desc"><strong>Tocar Nota:</strong> Executa a nota correspondente (A, B, C, D, E, F, G, H) ou a variação especial <strong>Mb</strong>.</span>
                 </li>
                 <li>
-                    <span class="key">[n]Nota</span>
-                    <span class="desc"><strong>Duração da Nota:</strong> Se houver um número imediatamente antes de uma nota (ex: <code>4C</code>), este modifica o tempo de sustentação/duração em que ela fica rodando.</span>
+                    <span class="key">Nota[n]</span>
+                    <span class="desc"><strong>Duração da Nota:</strong> Se houver um número imediatamente APÓS uma nota (ex: <code>C4</code>), este atua como multiplicador do tempo de sustentação daquela nota.</span>
                 </li>
                 <li>
                     <span class="key">a - h</span>
-                    <span class="desc"><strong>Silêncio (Pausa):</strong> Insere uma pausa correspondente à letra minúscula.</span>
+                    <span class="desc"><strong>Silêncio (Pausa):</strong> Insere uma pausa curta correspondente ao tempo padrão de uma batida.</span>
                 </li>
                 <li>
                     <span class="key">Default</span>
-                    <span class="desc">Se o caractere anterior for uma nota, repete a nota atual. Caso contrário, gera silêncio.</span>
+                    <span class="desc">Se o caractere lido for desconhecido, o sistema tenta repetir a última nota válida encontrada. Caso não haja nota anterior, gera uma pausa.</span>
                 </li>
             </ul>
         </div>
@@ -187,36 +187,44 @@
             <ul class="rule-list">
                 <li>
                     <span class="key">Espaço</span>
-                    <span class="desc"><strong>Volume:</strong> Dobra o volume da reprodução atual (com limite máximo de 127).</span>
+                    <span class="desc"><strong>Volume:</strong> Dobra o volume da reprodução atual (respeitando o limite máximo do MIDI).</span>
                 </li>
                 <li>
                     <span class="key">? ou V</span>
-                    <span class="desc"><strong>Oitava:</strong> Aumenta ou diminui a oitava de forma cíclica, respeitando os limites do sistema.</span>
+                    <span class="desc"><strong>Oitava:</strong> <code>?</code> sobe uma oitava e <code>V</code> desce uma oitava, respeitando os limites definidos no sistema.</span>
                 </li>
                 <li>
                     <span class="key">&gt; ou &lt;</span>
-                    <span class="desc"><strong>Tempo (BPM):</strong> Acelera ou desacelera o andamento da música em 10 BPM.</span>
+                    <span class="desc"><strong>Tempo (BPM):</strong> <code>&gt;</code> acelera e <code>&lt;</code> desacelera o andamento geral da música em degraus fixos.</span>
+                </li>
+                <li>
+                    <span class="key">*</span>
+                    <span class="desc"><strong>Fade Out:</strong> Deve ser o <em>último caractere</em> do texto. Aplica reverberação e zera o volume, criando um encerramento suave.</span>
                 </li>
             </ul>
         </div>
 
         <div class="card full-width">
-            <h2>Configurações Especiais</h2>
+            <h2>Configurações Especiais e Instrumentos</h2>
             <ul class="rule-list">
                 <li>
                     <span class="key">[ x ]</span>
-                    <span class="desc"><strong>Pular Beats:</strong> Define o número <code>x</code> de beats a serem ignorados/pulados no início. Esta regra pode ser inserida em qualquer parte do texto, inclusive no meio da composição.</span>
+                    <span class="desc"><strong>Pausas Prolongadas:</strong> Define um número <code>x</code> de batidas a serem inseridas como silêncio (ex: <code>[16]</code>).</span>
                 </li>
                 <li>
-                    <span class="key">Especiais</span>
-                    <span class="desc">Caracteres como <strong>Dígito Par</strong>, <code>~</code>, <code>!</code>, <code>;</code> e <code>,</code> alternam a reprodução para instrumentos específicos da lista abaixo.</span>
+                    <span class="key">! , ;</span>
+                    <span class="desc"><strong>Troca Fixa de Instrumento:</strong> Alterna a reprodução para instrumentos específicos pré-definidos nas regras do sistema (verifique os IDs vinculados no código).</span>
+                </li>
+                <li>
+                    <span class="key">0,2,4,6,8</span>
+                    <span class="desc"><strong>Incremento de Instrumento:</strong> Lê o dígito par e o <em>soma</em> ao ID do instrumento atual, alterando o timbre com base na tabela abaixo (limite de 127).</span>
                 </li>
             </ul>
         </div>
 
         <div class="card full-width">
-            <h2>Tabela de Instrumentos (Mapeamento de IDs)</h2>
-            <p style="color: var(--text-muted); margin-top: 0;">Use os comandos de alteração para alternar entre os timbres disponíveis abaixo:</p>
+            <h2>Tabela de Instrumentos (Mapeamento de IDs MIDI)</h2>
+            <p style="color: var(--text-muted); margin-top: 0;">Use os comandos de alteração para navegar entre os timbres disponíveis abaixo:</p>
             
             <div class="instrument-container">
                 <div class="instrument-grid" id="instruments-target">
