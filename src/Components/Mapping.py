@@ -190,9 +190,9 @@ class EFlatRule(Mapping):
 
     def RuleApply(self, context: RuleExecutionContext):
         note = Notes.getNoteFromName(context.payload, context.voice_specs.getOctave())
-        note_on = mido.Message('note_on', note=note, velocity=64, time=0, channel=context.voice_specs.getVoiceIdentifier())
+        note_on = mido.Message('note_on', note=note, velocity=context.voice_specs.getVolume(), time=0, channel=context.voice_specs.getVoiceIdentifier())
 
-        note_off = mido.Message('note_off', note=note, velocity=64, time=MappingConstants.TICKS_PER_BEAT, channel=context.voice_specs.getVoiceIdentifier())
+        note_off = mido.Message('note_off', note=note, velocity=context.voice_specs.getVolume(), time=MappingConstants.TICKS_PER_BEAT, channel=context.voice_specs.getVoiceIdentifier())
         context.midiTrack.append(note_on)
         context.midiTrack.append(note_off)
 
@@ -275,8 +275,8 @@ class DefaultRule(Mapping):
         if context.payload:
             note = Notes.getNoteFromName(context.payload, context.voice_specs.getOctave())
 
-            note_on = mido.Message('note_on', note=note, velocity=64, time=0, channel=context.voice_specs.getVoiceIdentifier())
-            note_off = mido.Message('note_off', note=note, velocity=64, time=MappingConstants.TICKS_PER_BEAT, channel=context.voice_specs.getVoiceIdentifier())
+            note_on = mido.Message('note_on', note=note, velocity=context.voice_specs.getVolume(), time=0, channel=context.voice_specs.getVoiceIdentifier())
+            note_off = mido.Message('note_off', note=note, velocity=context.voice_specs.getVolume(), time=MappingConstants.TICKS_PER_BEAT, channel=context.voice_specs.getVoiceIdentifier())
 
             context.midiTrack.append(note_on)
             context.midiTrack.append(note_off)
